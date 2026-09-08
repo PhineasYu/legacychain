@@ -125,6 +125,12 @@ relative can confirm, correct or dispute a record; the statement is stored
 beside the record and never over it, so disagreement is preserved as part of
 the history.
 
+Each attestation is anchored too, by hash, against the record it is about —
+`attest()` on the registry. Only the hash goes on chain; who said what stays
+in the private vault. This matters for a different reason than anchoring a
+file: a family's account of its own history is exactly the kind of thing that
+gets quietly revised later.
+
 AI is a reader, never the authority. Its output arrives as
 `status: 'pending'` and only a person can move it to accepted, edited or
 rejected — `PATCH /api/heritage/:id/enrichment` is the only route that can,
@@ -196,7 +202,7 @@ tests/                  vitest specs for hashing, PQC and anchoring
 | `GET` `DELETE` | `/api/heritage/:id` | Full record with provenance · remove it from the vault |
 | `POST` | `/api/heritage/:id/derived` | Register a transformed version |
 | `PATCH` | `/api/heritage/:id/enrichment` | Record a human verdict on an AI suggestion |
-| `GET` `POST` | `/api/heritage/:id/attestations` | Family attestations |
+| `GET` `POST` | `/api/heritage/:id/attestations` | Family attestations, each anchored by hash |
 | `POST` | `/api/verify` | Fingerprint an upload and look it up |
 | `POST` | `/api/ai/enrich` | Transcribe and describe a source (never stored as fact) |
 | `GET` | `/api/files/:sha256` | Serve a preserved original |

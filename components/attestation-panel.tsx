@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { addAttestation, ApiError } from '@/lib/api-client';
+import { AnchorStatusPill } from '@/components/anchor-proof';
 import type { Attestation, AttestationDecision } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -244,9 +245,24 @@ function AttestationRow({ attestation }: { attestation: Attestation }) {
         <p className="mt-1 font-serif-body text-sm italic leading-relaxed text-foreground/85">
           “{attestation.statement}”
         </p>
-        <p className="mt-2 text-[11px] font-medium tracking-label text-muted-foreground">
-          {config?.label ?? attestation.decision} · {formatDate(attestation.createdAt)}
-        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1">
+          <p className="text-[11px] font-medium tracking-label text-muted-foreground">
+            {config?.label ?? attestation.decision} · {formatDate(attestation.createdAt)}
+          </p>
+          {attestation.anchor && (
+            <AnchorStatusPill status={attestation.anchor.status} />
+          )}
+        </div>
+        {attestation.anchor?.explorerUrl && (
+          <a
+            href={attestation.anchor.explorerUrl}
+            target="_blank"
+            rel="noreferrer noopener"
+            className="mt-1 inline-block font-mono text-[10px] text-heritage-sky-deep hover:underline"
+          >
+            {attestation.anchor.attestationHash.slice(0, 18)}…
+          </a>
+        )}
       </div>
     </div>
   );

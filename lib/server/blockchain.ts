@@ -14,7 +14,7 @@
 
 import 'server-only';
 import { Contract, JsonRpcProvider, Wallet, keccak256, toUtf8Bytes } from 'ethers';
-import type { BlockchainAnchor, SignedProvenanceData } from '../types';
+import type { AttestationAnchor, BlockchainAnchor, SignedProvenanceData } from '../types';
 import {
   ETH_CHAIN_ID,
   ETH_EXPLORER_BASE,
@@ -137,6 +137,70 @@ export async function anchorRecord(
       status: 'failed',
       contractAddress: HERITAGE_REGISTRY_ADDRESS,
       note: `Anchoring failed: ${errorMessage(error)}. The fingerprint and post-quantum signature are still preserved.`,
+    };
+  }
+}
+
+/**
+ * Anchors a family attestation against the record it is about.
+ *
+ * The contract only emits an event here — it deliberately stores no
+ * attestation state, because a statement about history is not something the
+ * chain should arbitrate. What the chain provides is that the statement
+ * demonstrably existed at that block, and that nobody edited it afterwards.
+ *
+ * Never throws: an attestation that cannot be anchored is still a valid
+ * attestation, and the vault records it either way.
+ */
+export async function anchorAttestation(params: {
+  recordId: string;
+  /** Canonical text of the statement, hashed before it is sent */
+  canonical: string;
+}): Promise<AttestationAnchor> {
+  const attestationHash = keccak256(toUtf8Bytes(params.canonical));
+  const base: AttestationAnchor = {
+    status: 'simulated',
+    network: ETH_NETWORK_NAME,
+    chainId: ETH_CHAIN_ID,
+    attestationHash,
+    recordId: params.recordId,
+    anchoredAt: new Date().toISOString(),
+  };
+
+  if (!isBlockchainConfigured()) {
+    return {
+      ...base,
+      note: 'No RPC endpoint or signer configured — the attestation hash was derived locally and has not been written to a public chain.',
+    };
+  }
+
+  try {
+    const provider = new JsonRpcProvider(ETH_RPC_URL, ETH_CHAIN_ID);
+    const wallet = new Wallet(ETH_PRIVATE_KEY, provider);
+    const registry = new Contract(
+      HERITAGE_REGISTRY_ADDRESS,
+      HERITAGE_REGISTRY_ABI,
+      wallet
+    );
+
+    const tx = await registry.attest(params.recordId, attestationHash);
+    const receipt = await tx.wait();
+
+    return {
+      ...base,
+      status: 'anchored',
+      txHash: tx.hash,
+      blockNumber: receipt?.blockNumber ?? undefined,
+      explorerUrl: `${ETH_EXPLORER_BASE}/tx/${tx.hash}`,
+      anchoredAt: new Date().toISOString(),
+    };
+  } catch (error) {
+    return {
+      ...base,
+      status: 'failed',
+      // attest() reverts if the record was never registered on chain, which
+      // is the normal case while anchoring is simulated.
+      note: `Attestation was recorded in the vault but not anchored: ${errorMessage(error)}.`,
     };
   }
 }

@@ -66,6 +66,10 @@ export const SCHEMA_STATEMENTS: string[] = [
   `CREATE INDEX IF NOT EXISTS attestations_heritage_id_idx
      ON attestations (heritage_id)`,
 
+  // Added after the table shipped; ADD COLUMN IF NOT EXISTS keeps this
+  // idempotent alongside the CREATE TABLE above.
+  `ALTER TABLE attestations ADD COLUMN IF NOT EXISTS anchor JSONB`,
+
   // Preserved original files. Bytes live here rather than on disk so the
   // application can run on a read-only serverless filesystem. The primary key
   // IS the SHA-256 fingerprint, so identical content is stored once.

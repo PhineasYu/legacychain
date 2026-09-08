@@ -12,6 +12,7 @@ import { DATABASE_URL } from '../server/config';
 import { SCHEMA_STATEMENTS } from './schema';
 import type {
   Attestation,
+  AttestationAnchor,
   BlockchainAnchor,
   Contributor,
   HeritageItem,
@@ -194,12 +195,13 @@ export class PostgresStore implements HeritageStore {
     await this.sql`
       INSERT INTO attestations (
         id, heritage_id, provenance_id, attester_name,
-        relationship, decision, statement, created_at
+        relationship, decision, statement, created_at, anchor
       ) VALUES (
         ${attestation.id}, ${attestation.heritageId},
         ${attestation.provenanceId ?? null}, ${attestation.attesterName},
         ${attestation.relationship}, ${attestation.decision},
-        ${attestation.statement}, ${attestation.createdAt}
+        ${attestation.statement}, ${attestation.createdAt},
+        ${JSON.stringify(attestation.anchor ?? null)}
       )
     `;
     return attestation;
@@ -321,6 +323,7 @@ function toAttestation(row: Row): Attestation {
     relationship: (row.relationship as string) ?? '',
     decision: row.decision as Attestation['decision'],
     statement: (row.statement as string) ?? '',
+    anchor: parseJson<AttestationAnchor>(row.anchor) ?? undefined,
     createdAt: toIso(row.created_at),
   };
 }

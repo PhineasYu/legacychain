@@ -290,6 +290,20 @@ const attested = await api(`/api/heritage/${item.id}/attestations`, {
 });
 check('attestation recorded', attested.ok && attested.body.data?.decision === 'confirm');
 
+const attestAnchor = attested.body.data?.anchor;
+check('the attestation was anchored too', Boolean(attestAnchor?.attestationHash));
+check(
+  'its anchor status is truthful',
+  ['anchored', 'simulated', 'failed'].includes(attestAnchor?.status),
+  `got ${attestAnchor?.status}`
+);
+check(
+  'only a hash of the statement is anchored',
+  typeof attestAnchor?.attestationHash === 'string' &&
+    !JSON.stringify(attestAnchor).includes('wedding in 1968'),
+  'the statement text leaked into the anchor'
+);
+
 const final = await api(`/api/heritage/${item.id}`);
 check('the attestation appears on the record', final.body.data?.attestations?.length >= 1);
 check(

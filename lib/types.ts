@@ -116,6 +116,15 @@ export type AttestationDecision = 'confirm' | 'correct' | 'dispute';
 export interface Attestation {
   id: string;
   heritageId: string;
+  /**
+   * Proof that this statement existed at a point in time.
+   *
+   * Only a hash of the statement is anchored — who said what stays in the
+   * private vault. Anchoring an attestation matters for a different reason
+   * than anchoring a file: a family's account of its own history is exactly
+   * the kind of thing that gets quietly revised later.
+   */
+  anchor?: AttestationAnchor;
   /** Optional: attests to one specific provenance record */
   provenanceId?: string;
   attesterName: string;
@@ -123,6 +132,21 @@ export interface Attestation {
   decision: AttestationDecision;
   statement: string;
   createdAt: string;
+}
+
+export interface AttestationAnchor {
+  status: AnchorStatus;
+  network: string;
+  chainId: number;
+  /** keccak256 of the canonical attestation payload */
+  attestationHash: string;
+  /** The heritage record this statement is about */
+  recordId: string;
+  txHash?: string;
+  blockNumber?: number;
+  explorerUrl?: string;
+  anchoredAt: string;
+  note?: string;
 }
 
 // ---------------------------------------------------------------------------

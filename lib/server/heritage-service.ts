@@ -27,7 +27,7 @@ import type {
   SignedProvenanceData,
 } from '../types';
 import { getStore } from '../db';
-import { anchorRecord } from './blockchain';
+import { anchorAttestation, anchorRecord, deriveRecordId } from './blockchain';
 import { storeOriginal } from './files';
 import { signRecord } from './pqc-server';
 
@@ -263,6 +263,15 @@ export async function addAttestation(input: {
   const item = await store.getHeritage(input.heritageId);
   if (!item) throw new HeritageNotFoundError(input.heritageId);
 
+  const createdAt = new Date().toISOString();
+
+  // Anchor against the provenance record the statement is about, defaulting
+  // to the item's original.
+  const target =
+    item.provenance.find((record) => record.id === input.provenanceId) ??
+    item.provenance.find((record) => record.kind === 'ORIGINAL') ??
+    item.provenance[0];
+
   const attestation: Attestation = {
     id: newId('att'),
     heritageId: input.heritageId,
@@ -271,8 +280,24 @@ export async function addAttestation(input: {
     relationship: input.relationship,
     decision: input.decision,
     statement: input.statement,
-    createdAt: new Date().toISOString(),
+    createdAt,
   };
+
+  if (target) {
+    attestation.anchor = await anchorAttestation({
+      recordId: deriveRecordId(target.id, target.digitalDna),
+      // Fixed field order, so the same statement always hashes the same way.
+      canonical: [
+        `heritageId:${attestation.heritageId}`,
+        `provenanceId:${target.id}`,
+        `attester:${attestation.attesterName}`,
+        `relationship:${attestation.relationship}`,
+        `decision:${attestation.decision}`,
+        `statement:${attestation.statement}`,
+        `createdAt:${createdAt}`,
+      ].join('\n'),
+    });
+  }
 
   return store.addAttestation(attestation);
 }
