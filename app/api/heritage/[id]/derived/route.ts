@@ -1,10 +1,10 @@
 /**
  * POST /api/heritage/[id]/derived — register a transformed version.
  *
- * This is the endpoint behind "AI can transform heritage, but it cannot
- * erase provenance". The derived file is fingerprinted, signed and
- * anchored in its own right, and linked to the record it came from. The
- * parent record is never touched.
+ * A derived version is anything made *from* a source: a transcript, a
+ * translation, a restoration. It is fingerprinted, signed and anchored in
+ * its own right and linked to what it was made from, so a reading can never
+ * quietly take the place of the thing it read. The parent is never touched.
  *
  * multipart/form-data:
  *   file           the transformed bytes (required)

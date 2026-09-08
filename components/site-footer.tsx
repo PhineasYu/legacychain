@@ -16,9 +16,9 @@ export function SiteFooter() {
               </span>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-heritage-sand/75">
-              A private, post-quantum, blockchain-backed vault for family
-              heritage. AI can transform the artifact. It cannot change the
-              history of the artifact.
+              A private vault for family heritage. AI makes the sources
+              readable; provenance keeps every reading attached to the source
+              it came from, in a record no one can quietly change.
             </p>
           </div>
 

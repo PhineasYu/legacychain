@@ -44,10 +44,10 @@ export default async function HomePage() {
               </h1>
               <p className="mt-6 max-w-lg text-lg leading-relaxed text-heritage-sand/85">
                 Every family has memories that survived by accident — a
-                photograph, a letter, a recorded voice. LegacyChain gives them a
-                fingerprint, a post-quantum signature and an immutable anchor,
-                so a hundred years from now anyone can still tell which version
-                was the original.
+                photograph, a letter, a recorded voice. LegacyChain preserves
+                the source and everything read from it, in a record that no one
+                can quietly change — not the family, not us. If this service
+                disappeared tomorrow, the proof would still hold.
               </p>
 
               <div className="mt-9 flex flex-wrap gap-3">
@@ -76,12 +76,13 @@ export default async function HomePage() {
             <div className="rounded-[1.75rem] bg-heritage-sand/12 p-8 ring-1 ring-heritage-sand/20 backdrop-blur-sm">
               <Sparkles className="h-7 w-7 text-heritage-sky" />
               <p className="mt-5 font-display text-2xl font-semibold leading-snug text-white text-balance">
-                AI can transform heritage, but it cannot erase provenance.
+                AI opens the archive. Provenance keeps it honest.
               </p>
               <p className="mt-4 text-sm leading-relaxed text-heritage-sand/75">
-                Restore a photograph, colorize it, enhance it — every version
-                gets its own record and links back to the original. The chain
-                only ever grows.
+                A faded letter becomes readable in seconds — that reading is
+                the point. It is also not the letter. Every transcript,
+                translation and restoration stays attached to the exact source
+                it came from.
               </p>
             </div>
           </div>

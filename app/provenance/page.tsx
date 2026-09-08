@@ -88,10 +88,11 @@ export default async function ProvenanceIndexPage() {
         <div className="mt-14 rounded-[1.75rem] bg-mocha-panel px-8 py-12 text-center shadow-heritage-lg">
           <Sparkles className="mx-auto h-8 w-8 text-heritage-sky" />
           <p className="mx-auto mt-5 max-w-xl font-display text-2xl font-semibold leading-snug text-white text-balance">
-            AI can transform heritage, but it cannot erase provenance.
+            Every reading stays attached to what it read.
           </p>
           <p className="mt-3 text-sm text-heritage-sand/75">
-            Every derived version links back to the original — always.
+            A transcript is useful precisely because it is easier than the
+            source. That is also why it must always point back at it.
           </p>
         </div>
       </main>
