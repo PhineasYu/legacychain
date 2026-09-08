@@ -97,9 +97,27 @@ export const NEURO_LEGAL_ID = process.env.NEURO_LEGAL_ID ?? '';
 /** Directory where uploaded original files are stored in local mode. */
 export const LOCAL_DATA_DIR = process.env.LOCAL_DATA_DIR ?? '.data';
 
-/** Public base URL, used to build QR / certificate links. */
-export const PUBLIC_BASE_URL =
-  process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
+/**
+ * Public base URL, used for QR codes, certificate links and the Referer the
+ * Neuro Agent API requires.
+ *
+ * Falls back to the deployment URL the host provides, so a Vercel deploy does
+ * not need this set by hand — one less thing to get wrong.
+ */
+export const PUBLIC_BASE_URL = resolvePublicBaseUrl();
+
+function resolvePublicBaseUrl(): string {
+  const explicit = process.env.NEXT_PUBLIC_BASE_URL;
+  if (explicit && explicit.length > 0) return explicit.replace(/\/$/, '');
+
+  // Vercel sets the stable production domain, and VERCEL_URL for the
+  // per-deployment domain. Neither includes a scheme.
+  const hosted =
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  if (hosted && hosted.length > 0) return `https://${hosted}`;
+
+  return 'http://localhost:3000';
+}
 
 export function isDatabaseConfigured(): boolean {
   return DATABASE_URL.length > 0;
