@@ -70,3 +70,29 @@ export async function POST(
     );
   }
 }
+
+/**
+ * DELETE /api/heritage/[id]/attestations?attestationId=... — withdraw a
+ * statement from the vault.
+ *
+ * Anything already anchored stays anchored: the chain records that the
+ * statement was made, which is not the vault's to retract.
+ */
+export async function DELETE(
+  request: Request,
+  { params }: { params: { id: string } }
+) {
+  const attestationId = new URL(request.url).searchParams.get('attestationId');
+  if (!attestationId) {
+    return fail('Pass ?attestationId= to say which statement to withdraw.', 422);
+  }
+
+  const store = await getStore();
+  const existing = await store.listAttestations(params.id);
+  if (!existing.some((a) => a.id === attestationId)) {
+    return fail(`No attestation ${attestationId} on ${params.id}.`, 404, 'not_found');
+  }
+
+  await store.deleteAttestation(attestationId);
+  return ok({ id: attestationId, removed: true });
+}

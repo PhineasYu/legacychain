@@ -207,6 +207,13 @@ export class PostgresStore implements HeritageStore {
     return attestation;
   }
 
+  async deleteAttestation(id: string): Promise<boolean> {
+    const rows = (await this.sql`
+      DELETE FROM attestations WHERE id = ${id} RETURNING id
+    `) as Row[];
+    return rows.length > 0;
+  }
+
   async listAttestations(heritageId: string): Promise<Attestation[]> {
     const rows = (await this.sql`
       SELECT * FROM attestations

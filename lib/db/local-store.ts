@@ -141,6 +141,14 @@ export class LocalStore implements HeritageStore {
     });
   }
 
+  async deleteAttestation(id: string): Promise<boolean> {
+    return this.mutate((data) => {
+      const before = data.attestations.length;
+      data.attestations = data.attestations.filter((a) => a.id !== id);
+      return data.attestations.length < before;
+    });
+  }
+
   async listAttestations(heritageId: string): Promise<Attestation[]> {
     return this.cache.attestations
       .filter((a) => a.heritageId === heritageId)

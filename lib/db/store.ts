@@ -53,6 +53,14 @@ export interface HeritageStore {
   deleteHeritage(id: string): Promise<boolean>;
 
   addAttestation(attestation: Attestation): Promise<Attestation>;
+  /**
+   * Withdraws a statement from the private vault.
+   *
+   * Anything already anchored stays anchored — the hash on chain is a record
+   * that the statement was made, which is not ours to retract. This removes
+   * it from the family's own vault, which is.
+   */
+  deleteAttestation(id: string): Promise<boolean>;
   listAttestations(heritageId: string): Promise<Attestation[]>;
 
   /** Stores original file bytes. Writing the same fingerprint twice is a no-op. */
