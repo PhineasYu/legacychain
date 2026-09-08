@@ -20,8 +20,46 @@ export interface RuntimeMode {
   identity: SubsystemMode;
 }
 
-/** Neon / Postgres connection string. Falls back to the local file store. */
-export const DATABASE_URL = process.env.DATABASE_URL ?? '';
+/**
+ * Neon / Postgres connection string. Falls back to the local file store.
+ *
+ * Hosting providers name this variable differently — Vercel's Neon
+ * integration lets you choose a prefix, producing STORAGE_URL, NEON_URL and
+ * so on — so rather than requiring one exact name, any environment variable
+ * holding a Postgres connection string is accepted.
+ */
+export const DATABASE_URL = resolveDatabaseUrl();
+
+/** Names checked first, in order, before falling back to a scan. */
+const PREFERRED_DATABASE_VARS = [
+  'DATABASE_URL',
+  'POSTGRES_URL',
+  'NEON_DATABASE_URL',
+  'STORAGE_URL',
+];
+
+function isPostgresUrl(value: string | undefined): value is string {
+  return (
+    typeof value === 'string' &&
+    /^postgres(ql)?:\/\//.test(value.trim())
+  );
+}
+
+function resolveDatabaseUrl(): string {
+  for (const name of PREFERRED_DATABASE_VARS) {
+    const value = process.env[name];
+    if (isPostgresUrl(value)) return value.trim();
+  }
+
+  // Any *_URL variable holding a Postgres connection string. Pooled
+  // connections are preferred over the "unpooled" variants some providers
+  // add alongside them, which are not suited to serverless.
+  const candidates = Object.entries(process.env)
+    .filter(([name, value]) => name.endsWith('_URL') && isPostgresUrl(value))
+    .sort(([a], [b]) => Number(a.includes('UNPOOLED')) - Number(b.includes('UNPOOLED')));
+
+  return candidates.length > 0 ? (candidates[0][1] as string).trim() : '';
+}
 
 /** Anthropic API key for AI heritage enrichment. Falls back to heuristics. */
 export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
