@@ -28,6 +28,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { AnchorProof } from '@/components/anchor-proof';
 import { ProtocolBadges } from '@/components/protocol-badges';
 import { ApiError, enrichFile, preserveHeritage, reviewEnrichment } from '@/lib/api-client';
+import { createDigitalFingerprint } from '@/lib/services/hashing';
 import type { AiEnrichment, HeritageItem, HeritageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -46,12 +47,12 @@ const heritageTypes: { value: HeritageType; icon: typeof ImageIcon }[] = [
  */
 type StepId = 'ai' | 'hash' | 'pqc' | 'anchor' | 'certificate';
 
-const STEPS: { id: StepId; label: string; icon: typeof Sparkles }[] = [
-  { id: 'ai', label: 'Understanding the heritage', icon: Sparkles },
-  { id: 'hash', label: 'Creating the digital fingerprint', icon: Fingerprint },
-  { id: 'pqc', label: 'Signing with post-quantum cryptography', icon: KeyRound },
-  { id: 'anchor', label: 'Anchoring the provenance record', icon: Link2 },
-  { id: 'certificate', label: 'Issuing the heritage certificate', icon: Archive },
+const STEPS: { id: StepId; label: string; note: string; icon: typeof Sparkles }[] = [
+  { id: 'ai', label: 'Reading the source', note: 'A suggestion — you decide whether it counts', icon: Sparkles },
+  { id: 'hash', label: 'Digital DNA', note: 'SHA-256 over the exact bytes you uploaded', icon: Fingerprint },
+  { id: 'pqc', label: 'Post-quantum signature', note: 'ML-DSA-44 · binds the hash, the guardian and the timestamp', icon: KeyRound },
+  { id: 'anchor', label: 'Writing to the chain', note: 'Four values go on-chain. The file never does.', icon: Link2 },
+  { id: 'certificate', label: 'Issuing the certificate', note: 'Anyone can now check this without asking us', icon: Archive },
 ];
 
 type Phase = 'form' | 'processing' | 'done';
@@ -74,6 +75,8 @@ export default function AddHeritagePage() {
 
   const [aiData, setAiData] = useState<AiEnrichment | null>(null);
   const [preserved, setPreserved] = useState<HeritageItem | null>(null);
+  /** What each stage actually produced — shown under its row as it lands. */
+  const [stepDetail, setStepDetail] = useState<Partial<Record<StepId, string>>>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -94,6 +97,7 @@ export default function AddHeritagePage() {
     setCompletedSteps([]);
     setAiData(null);
     setPreserved(null);
+    setStepDetail({});
 
     try {
       // Step 1 — ask the model what it can observe. Suggestions only.
@@ -107,7 +111,13 @@ export default function AddHeritagePage() {
         story: story.trim() || undefined,
       });
       setAiData(enrichment);
+      setStepDetail((d) => ({ ...d, ai: `source: ${enrichment.source}` }));
       setCompletedSteps(['ai']);
+
+      // The fingerprint is computed here, in the browser, over the same bytes
+      // that are about to be uploaded — so what is shown is the real digest,
+      // not an echo of whatever the server later claims.
+      const localDigest = (await createDigitalFingerprint(file)).digest;
 
       // Steps 2-5 all happen inside one server request; they are revealed
       // in sequence so the pipeline stays legible while it runs.
@@ -126,12 +136,25 @@ export default function AddHeritagePage() {
 
       for (const step of ['hash', 'pqc', 'anchor'] as StepId[]) {
         setActiveStep(step);
-        await delay(650);
+        await delay(700);
+        if (step === 'hash') {
+          setStepDetail((d) => ({ ...d, hash: localDigest }));
+        }
         setCompletedSteps((current) => [...current, step]);
       }
 
       setActiveStep('certificate');
       const item = await request;
+      setStepDetail((d) => ({
+        ...d,
+        pqc: item.pqcSignature.signatureBase64
+          ? `${item.pqcSignature.algorithm} · ${item.pqcSignature.signatureBase64.length} base64 chars`
+          : 'unsigned',
+        anchor: item.blockchain
+          ? `record ${item.blockchain.recordId.slice(0, 22)}… on ${item.blockchain.network}`
+          : 'not anchored',
+        certificate: item.id,
+      }));
       setCompletedSteps((current) => [...current, 'certificate']);
       setActiveStep(null);
       setPreserved(item);
@@ -367,7 +390,7 @@ export default function AddHeritagePage() {
             </div>
 
             <ol className="mt-8 space-y-2">
-              {STEPS.map(({ id, label, icon: Icon }) => {
+              {STEPS.map(({ id, label, note, icon: Icon }) => {
                 const complete = completedSteps.includes(id);
                 const active = activeStep === id;
                 return (
@@ -396,16 +419,24 @@ export default function AddHeritagePage() {
                         <Icon className="h-5 w-5" />
                       )}
                     </span>
-                    <span
-                      className={cn(
-                        'text-sm font-medium',
-                        complete && 'text-heritage-sky-deep',
-                        active && 'text-foreground',
-                        !complete && !active && 'text-muted-foreground'
+                    <div className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          'text-sm font-medium',
+                          complete && 'text-heritage-sky-deep',
+                          active && 'text-foreground',
+                          !complete && !active && 'text-muted-foreground'
+                        )}
+                      >
+                        {label}
+                      </span>
+                      <p className="mt-0.5 text-xs text-muted-foreground">{note}</p>
+                      {stepDetail[id] && (
+                        <p className="mt-1 break-all font-mono text-[11px] text-heritage-sky-deep">
+                          {stepDetail[id]}
+                        </p>
                       )}
-                    >
-                      {label}
-                    </span>
+                    </div>
                   </li>
                 );
               })}
@@ -450,6 +481,24 @@ export default function AddHeritagePage() {
 
             <AnchorProof anchor={preserved.blockchain} />
 
+            {/* Spelled out, because "we put it on a blockchain" is the claim
+                people are right to be suspicious of. */}
+            <div className="rounded-3xl bg-secondary/60 px-6 py-5">
+              <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                What went on the chain
+              </p>
+              <dl className="mt-3 space-y-1.5 font-mono text-[11px]">
+                <ChainRow label="record id" value={preserved.blockchain?.recordId ?? '—'} />
+                <ChainRow label="file hash" value={preserved.blockchain?.fileHash ?? '—'} />
+                <ChainRow label="signature" value="keccak256 of the ML-DSA signature" />
+                <ChainRow label="parent" value="0x00… (this is an original)" />
+              </dl>
+              <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                Four values, and nothing else. The file itself, your name, the
+                story and the location never leave this vault.
+              </p>
+            </div>
+
             {aiData && (
               <AiSuggestionCard
                 heritageId={preserved.id}
@@ -479,6 +528,15 @@ export default function AddHeritagePage() {
       </main>
 
       <SiteFooter />
+    </div>
+  );
+}
+
+function ChainRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-0.5 sm:flex-row sm:gap-3">
+      <dt className="w-24 flex-shrink-0 text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 break-all text-foreground/80">{value}</dd>
     </div>
   );
 }
