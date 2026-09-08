@@ -6,7 +6,7 @@ import { HeritageCard } from '@/components/heritage-card';
 import { Button } from '@/components/ui/button';
 import { listHeritageSummaries } from '@/lib/server/heritage-service';
 import { PersistenceNotice } from '@/components/persistence-notice';
-import { getStore } from '@/lib/db';
+import { getDatabaseError, getStore } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,7 @@ export default async function VaultPage() {
   return (
     <div className="min-h-screen bg-paper-grain">
       <SiteHeader />
-      <PersistenceNotice durable={durable} />
+      <PersistenceNotice durable={durable} databaseError={getDatabaseError()} />
 
       <main className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-wrap items-end justify-between gap-6">

@@ -1,7 +1,7 @@
 /** Reports which subsystems are live and whether writes actually persist. */
 
 import { NextResponse } from 'next/server';
-import { getStore } from '@/lib/db';
+import { getDatabaseError, getStore } from '@/lib/db';
 import { getRuntimeMode } from '@/lib/server/config';
 import { getGuardianPublicKey } from '@/lib/server/pqc-server';
 
@@ -23,6 +23,8 @@ export async function GET() {
       note: store.durable
         ? 'Writes persist.'
         : 'Running in memory — set DATABASE_URL so uploads survive a restart.',
+      // Present only when DATABASE_URL was set but could not be used.
+      databaseError: getDatabaseError(),
     },
     heritageCount: items.length,
     pqc: {

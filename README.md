@@ -27,14 +27,15 @@ the vault shared and permanent:
 
 1. In your Vercel project, open **Storage → Create Database → Neon**. Vercel
    provisions it and sets `DATABASE_URL` for you.
-2. Locally, create the tables:
-   ```bash
-   DATABASE_URL="<the connection string from Vercel>" npm run db:init
-   ```
-3. Redeploy (**Deployments → ⋯ → Redeploy**).
+2. Redeploy (**Deployments → ⋯ → Redeploy**).
 
-The banner disappears and everyone now sees the same vault: one person uploads
-an original, another verifies it or registers a derived version.
+That is the whole procedure — the tables are created automatically on the first
+connection. The banner disappears and everyone now sees the same vault: one
+person uploads an original, another verifies it or registers a derived version.
+
+If `DATABASE_URL` is set but the database cannot be reached, the app keeps
+running and says so in a red banner with the connection error, rather than
+silently falling back and looking like the setting never applied.
 
 ### Optional extras
 
@@ -159,10 +160,10 @@ components/             UI, incl. protocol-badges, anchor-proof,
                         provenance-timeline, attestation-panel
 contracts/              HeritageRegistry.sol + compiled artifacts
 lib/
-  db/                   store interface, Neon driver, local driver, seed
+  db/                   store interface, Neon driver, local driver, schema, seed
   server/               pipeline, PQC custody, anchoring, AI, config
   services/             hashing and PQC primitives (isomorphic)
-scripts/                db:init, contract:compile, contract:deploy
+scripts/                contract:compile, contract:deploy
 tests/                  vitest specs for hashing, PQC and anchoring
 ```
 
@@ -183,10 +184,8 @@ tests/                  vitest specs for hashing, PQC and anchoring
 
 ## Going live
 
-**Database (Neon)**
-```bash
-DATABASE_URL=postgres://... npm run db:init
-```
+**Database (Neon)** — set `DATABASE_URL`. The schema in `lib/db/schema.ts` is
+applied automatically on the first connection.
 
 **Blockchain (Sepolia)**
 ```bash
@@ -213,7 +212,6 @@ npm run dev               # development server
 npm run build             # production build
 npm test                  # vitest
 npm run typecheck         # tsc --noEmit
-npm run db:init           # apply lib/db/schema.sql to DATABASE_URL
 npm run contract:compile  # solc -> contracts/artifacts
 npm run contract:deploy   # deploy HeritageRegistry
 ```

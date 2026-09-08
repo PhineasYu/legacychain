@@ -9,6 +9,7 @@
 import 'server-only';
 import { neon } from '@neondatabase/serverless';
 import { DATABASE_URL } from '../server/config';
+import { SCHEMA_STATEMENTS } from './schema';
 import type {
   Attestation,
   BlockchainAnchor,
@@ -41,8 +42,18 @@ export class PostgresStore implements HeritageStore {
 
   async init(): Promise<void> {
     if (this.initialised) return;
+
     // A cheap round-trip that fails fast on a bad connection string.
     await this.sql`SELECT 1`;
+
+    // Apply the schema on connect. Every statement is idempotent, so pointing
+    // at a fresh Neon branch is all the setup there is — no migration step to
+    // forget between setting DATABASE_URL and the first request. Sent as one
+    // transaction to keep it to a single round trip on a cold start.
+    await this.sql.transaction(
+      SCHEMA_STATEMENTS.map((statement) => this.sql(statement))
+    );
+
     this.initialised = true;
   }
 

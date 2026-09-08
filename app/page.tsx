@@ -13,7 +13,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { listHeritageSummaries } from '@/lib/server/heritage-service';
 import { PersistenceNotice } from '@/components/persistence-notice';
-import { getStore } from '@/lib/db';
+import { getDatabaseError, getStore } from '@/lib/db';
 import { getRuntimeMode } from '@/lib/server/config';
 
 export const dynamic = 'force-dynamic';
@@ -27,7 +27,7 @@ export default async function HomePage() {
   return (
     <div className="min-h-screen bg-paper-grain">
       <SiteHeader />
-      <PersistenceNotice durable={durable} />
+      <PersistenceNotice durable={durable} databaseError={getDatabaseError()} />
 
       {/* Hero — the portfolio's editorial split: mocha panel, cream type */}
       <section className="mx-auto max-w-6xl px-6 pt-12">

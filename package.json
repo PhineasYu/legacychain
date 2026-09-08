@@ -9,7 +9,6 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "db:init": "node scripts/init-db.mjs",
     "contract:compile": "node scripts/compile-contract.mjs",
     "contract:deploy": "node scripts/deploy-contract.mjs"
   },

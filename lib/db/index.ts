@@ -19,6 +19,18 @@ import type { HeritageStore } from './store';
 let storeInstance: HeritageStore | null = null;
 let readyPromise: Promise<HeritageStore> | null = null;
 
+/**
+ * Why the configured database is not being used, if it was configured but
+ * could not be reached. Surfaced by /api/health and in the UI banner —
+ * otherwise adding DATABASE_URL and still seeing "demo mode" is a silent,
+ * undiagnosable failure.
+ */
+let databaseError: string | null = null;
+
+export function getDatabaseError(): string | null {
+  return databaseError;
+}
+
 export async function getStore(): Promise<HeritageStore> {
   // Seeding runs inside initialise() and calls back into getStore();
   // returning the instance directly keeps that from deadlocking.
@@ -41,10 +53,10 @@ async function createStore(): Promise<HeritageStore> {
       await postgres.init();
       return postgres;
     } catch (error) {
+      databaseError = error instanceof Error ? error.message : String(error);
       console.warn(
-        `[legacychain] DATABASE_URL is set but unreachable (${
-          error instanceof Error ? error.message : String(error)
-        }) — falling back to the local file store.`
+        `[legacychain] DATABASE_URL is set but unusable (${databaseError}) — ` +
+          'falling back to the local store.'
       );
     }
   }
