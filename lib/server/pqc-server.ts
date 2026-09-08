@@ -35,15 +35,36 @@ function getKeyPair(): PqcKeyPair {
   return cachedKeyPair;
 }
 
+/**
+ * Set when PQC_GUARDIAN_SEED is present but malformed. Reported by
+ * /api/health so a mistyped seed is visible rather than silent.
+ */
+let seedError: string | null = null;
+
+export function getSeedError(): string | null {
+  return seedError;
+}
+
+/** True when signing is using the public development seed. */
+export function isUsingDevSeed(): boolean {
+  return !PQC_GUARDIAN_SEED || seedError !== null;
+}
+
 function resolveSeed(): Uint8Array {
   if (!PQC_GUARDIAN_SEED) return DEV_SEED;
 
-  const hex = PQC_GUARDIAN_SEED.replace(/^0x/, '');
+  const hex = PQC_GUARDIAN_SEED.trim().replace(/^0x/, '');
   if (!/^[0-9a-f]{64}$/i.test(hex)) {
-    throw new Error(
-      'PQC_GUARDIAN_SEED must be 32 bytes of hex (64 hex characters)'
-    );
+    // A malformed seed must not take the whole vault down: preservation
+    // matters more than key provenance, and health reports the downgrade.
+    seedError =
+      `PQC_GUARDIAN_SEED must be 64 hex characters (got ${hex.length}). ` +
+      'Falling back to the public development seed — signatures are forgeable ' +
+      'until this is corrected.';
+    console.warn(`[legacychain] ${seedError}`);
+    return DEV_SEED;
   }
+
   const seed = new Uint8Array(32);
   for (let i = 0; i < 32; i++) {
     seed[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);

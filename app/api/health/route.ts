@@ -3,7 +3,7 @@
 import { NextResponse } from 'next/server';
 import { getDatabaseError, getStore } from '@/lib/db';
 import { getRuntimeMode } from '@/lib/server/config';
-import { getGuardianPublicKey } from '@/lib/server/pqc-server';
+import { getGuardianPublicKey, getSeedError, isUsingDevSeed } from '@/lib/server/pqc-server';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -35,6 +35,10 @@ export async function GET() {
     pqc: {
       algorithm: 'ML-DSA-44 (FIPS-204)',
       guardianPublicKey: `${getGuardianPublicKey().slice(0, 32)}…`,
+      // The development seed is published in the repository, so signatures
+      // made with it can be forged by anyone who reads the source.
+      usingPublicDevSeed: isUsingDevSeed(),
+      seedError: getSeedError(),
     },
   });
 }
