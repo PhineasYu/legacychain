@@ -20,6 +20,23 @@ export interface RuntimeMode {
   identity: SubsystemMode;
 }
 
+/**
+ * Reads an environment variable, treating an empty or whitespace-only value
+ * as unset.
+ *
+ * Hosting dashboards and imported .env files routinely produce variables that
+ * are present but blank. `??` only falls back on undefined, so a blank value
+ * would silently override the default — which is how ETH_CHAIN_ID became 0
+ * and the network name became empty on a deployment that never configured a
+ * chain at all.
+ */
+function env(name: string, fallback = ''): string {
+  const value = process.env[name];
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : fallback;
+}
+
 /** Names checked first, in order, before falling back to a scan. */
 const PREFERRED_DATABASE_VARS = [
   'DATABASE_URL',
@@ -59,17 +76,17 @@ function resolveDatabaseUrl(): string {
 export const DATABASE_URL = resolveDatabaseUrl();
 
 /** Anthropic API key for AI heritage enrichment. Falls back to heuristics. */
-export const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY ?? '';
-export const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL ?? 'claude-sonnet-5';
+export const ANTHROPIC_API_KEY = env('ANTHROPIC_API_KEY');
+export const ANTHROPIC_MODEL = env('ANTHROPIC_MODEL', 'claude-sonnet-5');
 
 /** Ethereum JSON-RPC endpoint (Dwellir, Infura, Alchemy, ...). */
-export const ETH_RPC_URL = process.env.ETH_RPC_URL ?? '';
+export const ETH_RPC_URL = env('ETH_RPC_URL');
 /** Private key of the wallet that pays for anchoring transactions. */
-export const ETH_PRIVATE_KEY = process.env.ETH_PRIVATE_KEY ?? '';
+export const ETH_PRIVATE_KEY = env('ETH_PRIVATE_KEY');
 /** Address of the deployed HeritageRegistry contract. */
-export const HERITAGE_REGISTRY_ADDRESS = process.env.HERITAGE_REGISTRY_ADDRESS ?? '';
-export const ETH_CHAIN_ID = Number(process.env.ETH_CHAIN_ID ?? '11155111');
-export const ETH_NETWORK_NAME = process.env.ETH_NETWORK_NAME ?? 'Ethereum Sepolia';
+export const HERITAGE_REGISTRY_ADDRESS = env('HERITAGE_REGISTRY_ADDRESS');
+export const ETH_CHAIN_ID = Number(env('ETH_CHAIN_ID', '11155111'));
+export const ETH_NETWORK_NAME = env('ETH_NETWORK_NAME', 'Ethereum Sepolia');
 export const ETH_EXPLORER_BASE =
   process.env.ETH_EXPLORER_BASE ?? 'https://sepolia.etherscan.io';
 
@@ -81,21 +98,21 @@ export const ETH_EXPLORER_BASE =
  * When unset, a fixed development seed is used so demo signatures are
  * reproducible across restarts.
  */
-export const PQC_GUARDIAN_SEED = process.env.PQC_GUARDIAN_SEED ?? '';
+export const PQC_GUARDIAN_SEED = env('PQC_GUARDIAN_SEED');
 
 // --- Neuro (identity) -----------------------------------------------------
 // Provisioned once by `npm run neuro:provision`, which prints these values.
 // SECURITY: the account password authorizes signed requests — server-side only.
 
 /** Neuron host, e.g. sandbox1.neuro-tech.io — no scheme, no path. */
-export const NEURO_HOST = process.env.NEURO_HOST ?? '';
-export const NEURO_USERNAME = process.env.NEURO_USERNAME ?? '';
-export const NEURO_ACCOUNT_PASSWORD = process.env.NEURO_ACCOUNT_PASSWORD ?? '';
+export const NEURO_HOST = env('NEURO_HOST');
+export const NEURO_USERNAME = env('NEURO_USERNAME');
+export const NEURO_ACCOUNT_PASSWORD = env('NEURO_ACCOUNT_PASSWORD');
 /** The approved Legal Identity representing the vault's guardian. */
-export const NEURO_LEGAL_ID = process.env.NEURO_LEGAL_ID ?? '';
+export const NEURO_LEGAL_ID = env('NEURO_LEGAL_ID');
 
 /** Directory where uploaded original files are stored in local mode. */
-export const LOCAL_DATA_DIR = process.env.LOCAL_DATA_DIR ?? '.data';
+export const LOCAL_DATA_DIR = env('LOCAL_DATA_DIR', '.data');
 
 /**
  * Public base URL, used for QR codes, certificate links and the Referer the
@@ -107,14 +124,13 @@ export const LOCAL_DATA_DIR = process.env.LOCAL_DATA_DIR ?? '.data';
 export const PUBLIC_BASE_URL = resolvePublicBaseUrl();
 
 function resolvePublicBaseUrl(): string {
-  const explicit = process.env.NEXT_PUBLIC_BASE_URL;
-  if (explicit && explicit.length > 0) return explicit.replace(/\/$/, '');
+  const explicit = env('NEXT_PUBLIC_BASE_URL');
+  if (explicit) return explicit.replace(/\/$/, '');
 
   // Vercel sets the stable production domain, and VERCEL_URL for the
   // per-deployment domain. Neither includes a scheme.
-  const hosted =
-    process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
-  if (hosted && hosted.length > 0) return `https://${hosted}`;
+  const hosted = env('VERCEL_PROJECT_PRODUCTION_URL') || env('VERCEL_URL');
+  if (hosted) return `https://${hosted}`;
 
   return 'http://localhost:3000';
 }
