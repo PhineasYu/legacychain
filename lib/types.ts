@@ -153,6 +153,14 @@ export interface ProvenanceRecord {
 }
 
 export interface AiEnrichment {
+  /**
+   * What the AI read off the artifact — the handwriting in a letter, the
+   * words in a recording. This is the point of AI here: it makes an
+   * unreadable source readable. It is a *reading of* the source, never a
+   * replacement for it, so it is stored beside the original and always
+   * traceable back to the exact bytes it was read from.
+   */
+  transcript?: string;
   estimatedEra: string;
   suggestedTags: string[];
   description: string;

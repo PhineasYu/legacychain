@@ -40,7 +40,9 @@ export interface EnrichmentInput {
   bytes?: Uint8Array;
 }
 
-const NOTE = 'AI suggestions are never automatically treated as historical facts.';
+const NOTE =
+  'A reading, not the record. Everything here stays attached to the original ' +
+  'and is only what a person accepts.';
 
 export async function enrichHeritage(input: EnrichmentInput): Promise<AiEnrichment> {
   if (!isAiConfigured()) {
@@ -59,6 +61,7 @@ export async function enrichHeritage(input: EnrichmentInput): Promise<AiEnrichme
 }
 
 async function callAnthropic(input: EnrichmentInput): Promise<{
+  transcript?: string;
   estimatedEra: string;
   suggestedTags: string[];
   description: string;
@@ -88,8 +91,11 @@ async function callAnthropic(input: EnrichmentInput): Promise<{
     model: ANTHROPIC_MODEL,
     max_tokens: 1024,
     system:
-      'You help families catalogue heritage artifacts. You describe only what is ' +
-      'observable and you never state identities, relationships or events as fact — ' +
+      'You help families read heritage artifacts that are hard to read: faded ' +
+      'handwriting, old scripts, damaged documents. Transcribe faithfully — keep ' +
+      'the original wording, spelling and line breaks, and mark anything you ' +
+      'cannot make out as [illegible] rather than guessing. Describe only what is ' +
+      'observable, and never state identities, relationships or events as fact: ' +
       'those are for family members to confirm. Reply with JSON only.',
     messages: [{ role: 'user', content }],
   });
@@ -114,14 +120,28 @@ function buildPrompt(input: EnrichmentInput): string {
     .filter(Boolean)
     .join('\n');
 
+  const wantsTranscript = ['Letter', 'Document'].includes(input.heritageType);
+
   return `${facts}
 
-Suggest catalogue metadata for this family heritage item. Describe what is
-observable and hedge anything you cannot verify. Do not name people, and do
-not assert that an event happened — the family will confirm those separately.
+Help this family read and catalogue a heritage item.
+
+${
+    wantsTranscript
+      ? `Transcribe any text you can see, faithfully: keep the original wording,
+spelling and line breaks. Mark unreadable passages as [illegible] instead of
+guessing at them. If there is no legible text, return an empty transcript.`
+      : `If any text is visible in this item, transcribe it. Otherwise return an
+empty transcript.`
+  }
+
+Then describe what is observable, and hedge anything you cannot verify. Do not
+name people, and do not assert that an event happened — the family confirms
+those separately.
 
 Respond with JSON only, in exactly this shape:
 {
+  "transcript": "the text you can read, or an empty string",
   "estimatedEra": "a decade range, e.g. 1960s-1970s",
   "suggestedTags": ["3 to 5 short tags"],
   "description": "two or three sentences describing what is observable"
@@ -129,6 +149,7 @@ Respond with JSON only, in exactly this shape:
 }
 
 function parseSuggestion(text: string): {
+  transcript?: string;
   estimatedEra: string;
   suggestedTags: string[];
   description: string;
@@ -146,7 +167,13 @@ function parseSuggestion(text: string): {
     throw new Error('Model response is missing a description');
   }
 
+  const transcript =
+    typeof parsed.transcript === 'string' && parsed.transcript.trim().length > 0
+      ? parsed.transcript.trim()
+      : undefined;
+
   return {
+    transcript,
     estimatedEra: String(parsed.estimatedEra ?? 'Unknown era'),
     suggestedTags: tags,
     description: parsed.description,
@@ -154,7 +181,12 @@ function parseSuggestion(text: string): {
 }
 
 function withDefaults(
-  suggestion: { estimatedEra: string; suggestedTags: string[]; description: string },
+  suggestion: {
+    transcript?: string;
+    estimatedEra: string;
+    suggestedTags: string[];
+    description: string;
+  },
   source: string
 ): AiEnrichment {
   return {

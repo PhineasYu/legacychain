@@ -572,13 +572,23 @@ function AiSuggestionCard({
         </span>
         <div>
           <h3 className="font-display text-lg font-semibold text-foreground">
-            AI suggestions
+            What the AI read
           </h3>
           <p className="text-xs text-muted-foreground">Source: {data.source}</p>
         </div>
       </div>
 
       <dl className={cn('mt-5 space-y-4', rejected && 'opacity-50')}>
+        {data.transcript && (
+          <div>
+            <dt className="text-[11px] font-semibold tracking-label text-muted-foreground">
+              Transcript — what the AI could read
+            </dt>
+            <dd className="mt-2 whitespace-pre-wrap rounded-2xl bg-card px-4 py-3 font-serif-body text-sm leading-relaxed text-foreground ring-1 ring-border">
+              {data.transcript}
+            </dd>
+          </div>
+        )}
         <div>
           <dt className="text-[11px] font-semibold tracking-label text-muted-foreground">
             Estimated era

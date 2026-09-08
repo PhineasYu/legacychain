@@ -33,11 +33,17 @@ import type {
 } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
+/**
+ * What was done to produce this version. Most are AI *reading* the source —
+ * a transcript, a translation, a cleaned-up scan — which is the point of AI
+ * here. Each one becomes its own record pointing back at what it was made
+ * from, so a convenient reading can never quietly replace the source.
+ */
 const TRANSFORM_TYPES = [
+  'AI Transcription',
+  'AI Translation',
   'AI Restoration',
   'AI Colorization',
-  'AI Upscaling',
-  'Crop / Reframe',
   'Manual Retouch',
   'Format Conversion',
 ];

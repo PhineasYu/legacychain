@@ -53,6 +53,10 @@ export async function PATCH(
       typeof body.description === 'string' && body.description.trim().length > 0
         ? body.description.trim()
         : item.aiEnrichment.description,
+    transcript:
+      typeof body.transcript === 'string'
+        ? body.transcript.trim() || undefined
+        : item.aiEnrichment.transcript,
     estimatedEra:
       typeof body.estimatedEra === 'string' && body.estimatedEra.trim().length > 0
         ? body.estimatedEra.trim()

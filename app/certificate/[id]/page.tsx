@@ -155,10 +155,22 @@ export default async function CertificatePage({
                 <div className="flex flex-wrap items-center gap-2">
                   <Sparkles className="h-4 w-4 text-heritage-mocha" />
                   <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
-                    AI suggestion · {item.aiEnrichment.source}
+                    AI reading · {item.aiEnrichment.source}
                   </p>
                   <EnrichmentVerdict status={item.aiEnrichment.status} />
                 </div>
+
+                {item.aiEnrichment.transcript &&
+                  item.aiEnrichment.status !== 'rejected' && (
+                    <div className="mt-3">
+                      <p className="text-[10px] font-semibold tracking-label text-muted-foreground">
+                        Transcript
+                      </p>
+                      <p className="mt-1.5 whitespace-pre-wrap font-serif-body text-sm leading-relaxed text-foreground">
+                        {item.aiEnrichment.transcript}
+                      </p>
+                    </div>
+                  )}
 
                 {item.aiEnrichment.status === 'rejected' ? (
                   <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
