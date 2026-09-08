@@ -20,13 +20,14 @@ import type {
   AiEnrichment,
   VerificationStatus,
 } from '../types';
-import type { HeritageStore } from './store';
+import type { HeritageStore, StoredBlob } from './store';
 
 type Row = Record<string, unknown>;
 type SqlClient = ReturnType<typeof neon>;
 
 export class PostgresStore implements HeritageStore {
   readonly driver = 'neon-postgres';
+  readonly durable = true;
 
   private readonly sql: SqlClient;
   private initialised = false;
@@ -192,6 +193,43 @@ export class PostgresStore implements HeritageStore {
       ORDER BY created_at ASC
     `) as Row[];
     return rows.map(toAttestation);
+  }
+
+  // -------------------------------------------------------------------------
+  // Preserved originals
+  // -------------------------------------------------------------------------
+
+  async putBlob(blob: StoredBlob): Promise<void> {
+    // Bytes travel as base64 and are decoded into BYTEA by Postgres, which
+    // keeps binary data out of the HTTP driver's text protocol.
+    const base64 = Buffer.from(blob.bytes).toString('base64');
+    await this.sql`
+      INSERT INTO heritage_files (id, content_type, original_name, size, bytes)
+      VALUES (
+        ${blob.id}, ${blob.contentType}, ${blob.originalName},
+        ${blob.size}, decode(${base64}, 'base64')
+      )
+      ON CONFLICT (id) DO NOTHING
+    `;
+  }
+
+  async getBlob(id: string): Promise<StoredBlob | null> {
+    const rows = (await this.sql`
+      SELECT id, content_type, original_name, size,
+             encode(bytes, 'base64') AS bytes_base64
+      FROM heritage_files
+      WHERE id = ${id}
+    `) as Row[];
+    if (rows.length === 0) return null;
+
+    const row = rows[0];
+    return {
+      id: row.id as string,
+      contentType: (row.content_type as string) ?? 'application/octet-stream',
+      originalName: (row.original_name as string) ?? id,
+      size: Number(row.size),
+      bytes: new Uint8Array(Buffer.from(row.bytes_base64 as string, 'base64')),
+    };
   }
 }
 

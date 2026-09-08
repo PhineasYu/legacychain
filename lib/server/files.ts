@@ -1,21 +1,15 @@
 /**
- * Blob storage for original heritage files.
+ * Preserved originals.
  *
- * Originals are stored outside the database and served back through
- * /api/files/[id]. They are addressed by their SHA-256 fingerprint, so
- * the same bytes are never stored twice and the stored name is itself
- * a proof of content.
- *
- * This local-disk implementation is the MVP. Swapping in S3, R2 or
- * IPFS means replacing only the three functions below.
+ * Files are addressed by their SHA-256 fingerprint, so identical content is
+ * stored once and the storage key is itself a claim about the contents.
+ * The bytes go wherever the active store puts them — Postgres when a
+ * database is configured, otherwise local disk (or memory on a read-only
+ * filesystem) — so this module never touches the filesystem directly.
  */
 
 import 'server-only';
-import { promises as fs } from 'node:fs';
-import path from 'node:path';
-import { LOCAL_DATA_DIR } from './config';
-
-const UPLOAD_DIR = path.join(process.cwd(), LOCAL_DATA_DIR, 'originals');
+import { getStore } from '../db';
 
 export interface StoredFile {
   /** SHA-256 hex digest — also the storage key */
@@ -26,71 +20,50 @@ export interface StoredFile {
   url: string;
 }
 
-/**
- * Persists file bytes under their fingerprint.
- * Storing the same content twice is a no-op, not an error.
- */
+/** Rejects anything that is not a plain SHA-256 digest before it is used as a key. */
+export function isFingerprint(value: string): boolean {
+  return /^[0-9a-f]{64}$/i.test(value);
+}
+
 export async function storeOriginal(params: {
   digest: string;
   bytes: Uint8Array;
   contentType: string;
   originalName: string;
 }): Promise<StoredFile> {
-  await fs.mkdir(UPLOAD_DIR, { recursive: true });
+  const store = await getStore();
 
-  const blobPath = path.join(UPLOAD_DIR, params.digest);
-  const metaPath = `${blobPath}.json`;
-
-  const meta = {
-    id: params.digest,
+  const blob = {
+    id: params.digest.toLowerCase(),
     contentType: params.contentType || 'application/octet-stream',
-    size: params.bytes.byteLength,
     originalName: params.originalName,
+    size: params.bytes.byteLength,
+    bytes: params.bytes,
   };
 
-  if (!(await exists(blobPath))) {
-    await fs.writeFile(blobPath, params.bytes);
-  }
-  await fs.writeFile(metaPath, JSON.stringify(meta), 'utf8');
+  await store.putBlob(blob);
 
-  return { ...meta, url: `/api/files/${params.digest}` };
+  return {
+    id: blob.id,
+    contentType: blob.contentType,
+    size: blob.size,
+    originalName: blob.originalName,
+    url: `/api/files/${blob.id}`,
+  };
 }
 
 export async function readOriginal(
   digest: string
-): Promise<{ bytes: Buffer; contentType: string; originalName: string } | null> {
-  // The digest is used as a path segment, so reject anything that is not
-  // a plain hex digest before touching the filesystem.
-  if (!/^[0-9a-f]{64}$/i.test(digest)) return null;
+): Promise<{ bytes: Uint8Array; contentType: string; originalName: string } | null> {
+  if (!isFingerprint(digest)) return null;
 
-  const blobPath = path.join(UPLOAD_DIR, digest.toLowerCase());
-  try {
-    const bytes = await fs.readFile(blobPath);
-    let contentType = 'application/octet-stream';
-    let originalName = digest;
-    try {
-      const meta = JSON.parse(await fs.readFile(`${blobPath}.json`, 'utf8'));
-      contentType = meta.contentType ?? contentType;
-      originalName = meta.originalName ?? originalName;
-    } catch {
-      // Metadata is optional — fall back to the generic content type.
-    }
-    return { bytes, contentType, originalName };
-  } catch {
-    return null;
-  }
-}
+  const store = await getStore();
+  const blob = await store.getBlob(digest.toLowerCase());
+  if (!blob) return null;
 
-export async function hasOriginal(digest: string): Promise<boolean> {
-  if (!/^[0-9a-f]{64}$/i.test(digest)) return false;
-  return exists(path.join(UPLOAD_DIR, digest.toLowerCase()));
-}
-
-async function exists(filePath: string): Promise<boolean> {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
+  return {
+    bytes: blob.bytes,
+    contentType: blob.contentType,
+    originalName: blob.originalName,
+  };
 }

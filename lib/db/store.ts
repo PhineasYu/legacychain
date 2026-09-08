@@ -15,6 +15,15 @@ import type {
   ProvenanceRecord,
 } from '../types';
 
+/** A preserved original, addressed by its SHA-256 fingerprint. */
+export interface StoredBlob {
+  id: string;
+  contentType: string;
+  originalName: string;
+  size: number;
+  bytes: Uint8Array;
+}
+
 export interface HeritageStore {
   /** Human-readable name of the active driver, surfaced by /api/health */
   readonly driver: string;
@@ -35,4 +44,15 @@ export interface HeritageStore {
 
   addAttestation(attestation: Attestation): Promise<Attestation>;
   listAttestations(heritageId: string): Promise<Attestation[]>;
+
+  /** Stores original file bytes. Writing the same fingerprint twice is a no-op. */
+  putBlob(blob: StoredBlob): Promise<void>;
+  getBlob(id: string): Promise<StoredBlob | null>;
+
+  /**
+   * Whether writes survive a restart. False when the store fell back to
+   * memory because no database was configured and the disk is read-only —
+   * the UI says so rather than silently losing a family's upload.
+   */
+  readonly durable: boolean;
 }

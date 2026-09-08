@@ -23,7 +23,7 @@ export async function GET(
     ? `attachment; filename="${encodeURIComponent(file.originalName)}"`
     : 'inline';
 
-  return new Response(new Uint8Array(file.bytes), {
+  return new Response(file.bytes, {
     headers: {
       'Content-Type': file.contentType,
       'Content-Length': String(file.bytes.byteLength),

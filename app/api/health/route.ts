@@ -1,4 +1,4 @@
-/** Reports which subsystems are live and which are running in local mode. */
+/** Reports which subsystems are live and whether writes actually persist. */
 
 import { NextResponse } from 'next/server';
 import { getStore } from '@/lib/db';
@@ -17,11 +17,17 @@ export async function GET() {
     ok: true,
     service: 'legacychain',
     mode,
-    storeDriver: store.driver,
+    storage: {
+      driver: store.driver,
+      durable: store.durable,
+      note: store.durable
+        ? 'Writes persist.'
+        : 'Running in memory — set DATABASE_URL so uploads survive a restart.',
+    },
     heritageCount: items.length,
     pqc: {
       algorithm: 'ML-DSA-44 (FIPS-204)',
-      guardianPublicKey: getGuardianPublicKey().slice(0, 32) + '…',
+      guardianPublicKey: `${getGuardianPublicKey().slice(0, 32)}…`,
     },
   });
 }

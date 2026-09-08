@@ -59,3 +59,18 @@ CREATE TABLE IF NOT EXISTS attestations (
 
 CREATE INDEX IF NOT EXISTS attestations_heritage_id_idx
   ON attestations (heritage_id);
+
+-- Preserved original files.
+--
+-- Bytes live in the database rather than on disk so the application can run
+-- on a read-only serverless filesystem. The primary key IS the SHA-256
+-- fingerprint, so identical content is stored once and the key is itself a
+-- proof of what the row contains.
+CREATE TABLE IF NOT EXISTS heritage_files (
+  id            TEXT PRIMARY KEY,
+  content_type  TEXT        NOT NULL DEFAULT 'application/octet-stream',
+  original_name TEXT        NOT NULL DEFAULT '',
+  size          INTEGER     NOT NULL,
+  bytes         BYTEA       NOT NULL,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

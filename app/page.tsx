@@ -12,6 +12,8 @@ import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { listHeritageSummaries } from '@/lib/server/heritage-service';
+import { PersistenceNotice } from '@/components/persistence-notice';
+import { getStore } from '@/lib/db';
 import { getRuntimeMode } from '@/lib/server/config';
 
 export const dynamic = 'force-dynamic';
@@ -19,11 +21,13 @@ export const dynamic = 'force-dynamic';
 export default async function HomePage() {
   const items = await listHeritageSummaries();
   const mode = getRuntimeMode();
+  const { durable } = await getStore();
   const timeline = [...items].sort((a, b) => a.year - b.year).slice(0, 5);
 
   return (
     <div className="min-h-screen bg-paper-grain">
       <SiteHeader />
+      <PersistenceNotice durable={durable} />
 
       {/* Hero — the portfolio's editorial split: mocha panel, cream type */}
       <section className="mx-auto max-w-6xl px-6 pt-12">
@@ -200,6 +204,12 @@ export default async function HomePage() {
             <ModeChip label="Database" mode={mode.database} liveLabel="Neon Postgres" localLabel="Local file store" />
             <ModeChip label="Blockchain" mode={mode.blockchain} liveLabel="Ethereum" localLabel="Simulated anchors" />
             <ModeChip label="AI" mode={mode.ai} liveLabel="Claude" localLabel="Heuristic only" />
+            <ModeChip
+              label="Persistence"
+              mode={durable ? 'live' : 'local'}
+              liveLabel="Writes are saved"
+              localLabel="In memory only"
+            />
           </div>
         </section>
       </main>

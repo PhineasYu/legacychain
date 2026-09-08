@@ -1,5 +1,7 @@
 # LegacyChain — Sovereign History Vault
 
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FPhineasYu%2Flegacychain&project-name=legacychain&repository-name=legacychain)
+
 > Preserve the original. Preserve its provenance. Let AI understand history
 > without letting AI rewrite it.
 
@@ -7,6 +9,43 @@ A private, post-quantum, blockchain-backed vault for family heritage.
 Photographs, recordings, letters and documents are preserved with a
 cryptographic fingerprint, an ML-DSA-44 signature and an immutable anchor —
 while the family's actual content never leaves their private vault.
+
+---
+
+## Share it with your team
+
+**Click the Deploy button above.** Vercel will fork the repo to your account,
+build it and hand you a public URL — no configuration needed. The deployed app
+runs in **demo mode**: everything works (upload, fingerprint, sign, verify,
+derive, attest), but because there is no database yet it holds data in memory
+and says so in a banner at the top of every page.
+
+### Making it persist (about two minutes)
+
+Teammates each get their own short-lived copy until you add a database. To make
+the vault shared and permanent:
+
+1. In your Vercel project, open **Storage → Create Database → Neon**. Vercel
+   provisions it and sets `DATABASE_URL` for you.
+2. Locally, create the tables:
+   ```bash
+   DATABASE_URL="<the connection string from Vercel>" npm run db:init
+   ```
+3. Redeploy (**Deployments → ⋯ → Redeploy**).
+
+The banner disappears and everyone now sees the same vault: one person uploads
+an original, another verifies it or registers a derived version.
+
+### Optional extras
+
+| Add | To get |
+| --- | --- |
+| `ANTHROPIC_API_KEY` | Real vision-based AI enrichment instead of metadata heuristics |
+| `ETH_RPC_URL` + `ETH_PRIVATE_KEY` + `HERITAGE_REGISTRY_ADDRESS` | Anchors actually mined on Sepolia instead of labelled `simulated` |
+| `PQC_GUARDIAN_SEED` | Your own post-quantum signing key instead of the public dev seed |
+
+Set them in **Settings → Environment Variables**, then redeploy. Nothing breaks
+if they are missing — each subsystem degrades to a labelled local mode.
 
 ---
 
