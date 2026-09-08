@@ -155,6 +155,14 @@ export class PostgresStore implements HeritageStore {
     return next;
   }
 
+  async deleteHeritage(id: string): Promise<boolean> {
+    // provenance_records and attestations cascade from heritage_items.
+    const rows = (await this.sql`
+      DELETE FROM heritage_items WHERE id = ${id} RETURNING id
+    `) as Row[];
+    return rows.length > 0;
+  }
+
   async addProvenanceRecord(record: ProvenanceRecord): Promise<ProvenanceRecord> {
     await this.sql`
       INSERT INTO provenance_records (

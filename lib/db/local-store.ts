@@ -103,6 +103,15 @@ export class LocalStore implements HeritageStore {
     });
   }
 
+  async deleteHeritage(id: string): Promise<boolean> {
+    return this.mutate((data) => {
+      const before = data.heritage.length;
+      data.heritage = data.heritage.filter((h) => h.id !== id);
+      data.attestations = data.attestations.filter((a) => a.heritageId !== id);
+      return data.heritage.length < before;
+    });
+  }
+
   async addProvenanceRecord(record: ProvenanceRecord): Promise<ProvenanceRecord> {
     return this.mutate((data) => {
       const item = data.heritage.find((h) => h.id === record.heritageId);

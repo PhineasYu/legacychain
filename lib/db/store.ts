@@ -42,6 +42,16 @@ export interface HeritageStore {
   /** Finds any provenance record — across all items — with this fingerprint. */
   findProvenanceByDna(digitalDna: string): Promise<ProvenanceRecord | null>;
 
+  /**
+   * Removes an item and everything attached to it from the private vault.
+   *
+   * This does not contradict the product's immutability claim: what cannot be
+   * rewritten is the provenance chain and anything already anchored publicly.
+   * A guardian withdrawing their own family's material from their own vault is
+   * a different act, and one they are entitled to.
+   */
+  deleteHeritage(id: string): Promise<boolean>;
+
   addAttestation(attestation: Attestation): Promise<Attestation>;
   listAttestations(heritageId: string): Promise<Attestation[]>;
 
