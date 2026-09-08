@@ -43,17 +43,17 @@ export default async function ProvenancePage({
           <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-white sm:text-5xl">
             {item.title}
           </h1>
-          <p className="mt-3 text-heritage-sand/80">
+          <p className="mt-3 text-heritage-sand/90">
             {item.year} · {item.type}
             {item.location && ` · ${item.location}`}
           </p>
 
           <div className="mt-7 flex flex-wrap gap-3">
-            <span className="inline-flex items-center gap-2 rounded-full bg-heritage-sand/15 px-4 py-2 text-sm text-heritage-sand ring-1 ring-heritage-sand/25">
+            <span className="inline-flex items-center gap-2 rounded-full bg-heritage-sand/15 px-4 py-2 text-sm text-white ring-1 ring-heritage-sand/25">
               <Sparkles className="h-4 w-4" />
               1 original
             </span>
-            <span className="inline-flex items-center gap-2 rounded-full bg-heritage-sand/15 px-4 py-2 text-sm text-heritage-sand ring-1 ring-heritage-sand/25">
+            <span className="inline-flex items-center gap-2 rounded-full bg-heritage-sand/15 px-4 py-2 text-sm text-white ring-1 ring-heritage-sand/25">
               <GitBranch className="h-4 w-4" />
               {derivedCount} derived {derivedCount === 1 ? 'version' : 'versions'}
             </span>

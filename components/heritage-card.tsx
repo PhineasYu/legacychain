@@ -41,7 +41,7 @@ export function HeritageCard({
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-heritage-mocha-deep/55 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-heritage-mocha-deep/85 via-heritage-mocha-deep/25 to-transparent" />
 
         <span className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-full bg-background/92 px-3 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
           <TypeIcon className="h-3.5 w-3.5 text-heritage-sky-deep" />
@@ -86,7 +86,7 @@ export function HeritageCard({
           )}
         </div>
 
-        <p className="mt-4 border-t border-border/60 pt-3 font-mono text-[11px] text-muted-foreground/80">
+        <p className="mt-4 border-t border-border/60 pt-3 font-mono text-[11px] text-muted-foreground">
           {truncateDigest(item.digitalDna, 10, 8)}
         </p>
       </div>

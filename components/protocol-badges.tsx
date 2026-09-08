@@ -92,7 +92,7 @@ export function ProtocolBadges({
               <p
                 className={cn(
                   'truncate text-sm font-medium',
-                  active ? 'text-foreground' : 'text-muted-foreground/70'
+                  active ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {active ? activeDetail : 'Not present'}

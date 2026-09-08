@@ -90,7 +90,7 @@ export default async function ProvenanceIndexPage() {
           <p className="mx-auto mt-5 max-w-xl font-display text-2xl font-semibold leading-snug text-white text-balance">
             Every reading stays attached to what it read.
           </p>
-          <p className="mt-3 text-sm text-heritage-sand/75">
+          <p className="mt-3 text-sm text-heritage-sand/90">
             A transcript is useful precisely because it is easier than the
             source. That is also why it must always point back at it.
           </p>

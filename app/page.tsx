@@ -42,7 +42,7 @@ export default async function HomePage() {
                 <br />
                 original.
               </h1>
-              <p className="mt-6 max-w-lg text-lg leading-relaxed text-heritage-sand/85">
+              <p className="mt-6 max-w-lg text-lg leading-relaxed text-heritage-sand/90">
                 Every family has memories that survived by accident — a
                 photograph, a letter, a recorded voice. LegacyChain preserves
                 the source and everything read from it, in a record that no one
@@ -78,7 +78,7 @@ export default async function HomePage() {
               <p className="mt-5 font-display text-2xl font-semibold leading-snug text-white text-balance">
                 AI opens the archive. Provenance keeps it honest.
               </p>
-              <p className="mt-4 text-sm leading-relaxed text-heritage-sand/75">
+              <p className="mt-4 text-sm leading-relaxed text-heritage-sand">
                 A faded letter becomes readable in seconds — that reading is
                 the point. It is also not the letter. Every transcript,
                 translation and restoration stays attached to the exact source

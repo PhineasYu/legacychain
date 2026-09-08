@@ -375,7 +375,7 @@ export default function VerifyPage() {
                 <h2 className="mt-4 font-display text-2xl font-bold text-white">
                   Derived version registered
                 </h2>
-                <p className="mx-auto mt-2 max-w-md text-sm text-heritage-sand/80">
+                <p className="mx-auto mt-2 max-w-md text-sm text-heritage-sand/90">
                   “{registered.title}” is now part of the chain, with its own
                   fingerprint and signature, linked back to the original.
                 </p>

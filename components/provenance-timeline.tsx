@@ -124,7 +124,7 @@ function ProtocolChip({
     <span
       className={cn(
         'inline-flex items-center gap-1.5 font-mono text-[11px]',
-        active ? 'text-heritage-sky-deep' : 'text-muted-foreground/60'
+        active ? 'text-heritage-sky-deep' : 'text-muted-foreground'
       )}
     >
       <Icon className="h-3.5 w-3.5" />

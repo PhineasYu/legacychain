@@ -64,7 +64,7 @@ export default async function CertificatePage({
             <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
               Heritage Certificate
             </h1>
-            <p className="mt-3 font-mono text-[11px] text-heritage-sand/60">
+            <p className="mt-3 font-mono text-[11px] text-heritage-sand/90">
               {item.id}
             </p>
           </header>
@@ -85,7 +85,7 @@ export default async function CertificatePage({
               <h2 className="font-display text-4xl font-bold tracking-tight text-foreground">
                 {item.title}
               </h2>
-              <p className="mt-2 font-display text-2xl font-semibold text-heritage-sand-deep">
+              <p className="mt-2 font-display text-2xl font-semibold text-heritage-mocha">
                 {item.year}
               </p>
             </div>

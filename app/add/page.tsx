@@ -420,7 +420,7 @@ export default function AddHeritagePage() {
               <h2 className="mt-4 font-display text-3xl font-bold text-white">
                 Heritage preserved
               </h2>
-              <p className="mt-2 text-sm text-heritage-sand/80">
+              <p className="mt-2 text-sm text-heritage-sand/90">
                 “{preserved.title}” now has a fingerprint, a post-quantum
                 signature and a provenance record.
               </p>

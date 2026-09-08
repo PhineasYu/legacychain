@@ -9,6 +9,19 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      /**
+       * Tailwind's default opacity scale skips most values, so a modifier
+       * like /85 or /12 silently produces no rule at all and the element
+       * falls back to an inherited colour — which is how light body text
+       * ended up rendering as near-black ink on the dark hero panel.
+       * Every whole percentage is defined here so no modifier can fail
+       * quietly.
+       */
+      opacity: {
+        ...Object.fromEntries(
+          Array.from({ length: 101 }, (_, i) => [String(i), String(i / 100)])
+        ),
+      },
       fontFamily: {
         sans: ['var(--font-sans)', 'Poppins', 'system-ui', 'sans-serif'],
         serif: ['var(--font-serif-body)', 'Georgia', 'serif'],
@@ -27,66 +40,66 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       colors: {
-        background: 'hsl(var(--background))',
-        foreground: 'hsl(var(--foreground))',
+        background: 'hsl(var(--background) / <alpha-value>)',
+        foreground: 'hsl(var(--foreground) / <alpha-value>)',
         card: {
-          DEFAULT: 'hsl(var(--card))',
-          foreground: 'hsl(var(--card-foreground))',
+          DEFAULT: 'hsl(var(--card) / <alpha-value>)',
+          foreground: 'hsl(var(--card-foreground) / <alpha-value>)',
         },
         popover: {
-          DEFAULT: 'hsl(var(--popover))',
-          foreground: 'hsl(var(--popover-foreground))',
+          DEFAULT: 'hsl(var(--popover) / <alpha-value>)',
+          foreground: 'hsl(var(--popover-foreground) / <alpha-value>)',
         },
         primary: {
-          DEFAULT: 'hsl(var(--primary))',
-          foreground: 'hsl(var(--primary-foreground))',
+          DEFAULT: 'hsl(var(--primary) / <alpha-value>)',
+          foreground: 'hsl(var(--primary-foreground) / <alpha-value>)',
         },
         secondary: {
-          DEFAULT: 'hsl(var(--secondary))',
-          foreground: 'hsl(var(--secondary-foreground))',
+          DEFAULT: 'hsl(var(--secondary) / <alpha-value>)',
+          foreground: 'hsl(var(--secondary-foreground) / <alpha-value>)',
         },
         muted: {
-          DEFAULT: 'hsl(var(--muted))',
-          foreground: 'hsl(var(--muted-foreground))',
+          DEFAULT: 'hsl(var(--muted) / <alpha-value>)',
+          foreground: 'hsl(var(--muted-foreground) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: 'hsl(var(--accent))',
-          foreground: 'hsl(var(--accent-foreground))',
+          DEFAULT: 'hsl(var(--accent) / <alpha-value>)',
+          foreground: 'hsl(var(--accent-foreground) / <alpha-value>)',
         },
         destructive: {
-          DEFAULT: 'hsl(var(--destructive))',
-          foreground: 'hsl(var(--destructive-foreground))',
+          DEFAULT: 'hsl(var(--destructive) / <alpha-value>)',
+          foreground: 'hsl(var(--destructive-foreground) / <alpha-value>)',
         },
         success: {
-          DEFAULT: 'hsl(var(--success))',
-          foreground: 'hsl(var(--success-foreground))',
+          DEFAULT: 'hsl(var(--success) / <alpha-value>)',
+          foreground: 'hsl(var(--success-foreground) / <alpha-value>)',
         },
         warning: {
-          DEFAULT: 'hsl(var(--warning))',
-          foreground: 'hsl(var(--warning-foreground))',
+          DEFAULT: 'hsl(var(--warning) / <alpha-value>)',
+          foreground: 'hsl(var(--warning-foreground) / <alpha-value>)',
         },
-        border: 'hsl(var(--border))',
-        input: 'hsl(var(--input))',
-        ring: 'hsl(var(--ring))',
+        border: 'hsl(var(--border) / <alpha-value>)',
+        input: 'hsl(var(--input) / <alpha-value>)',
+        ring: 'hsl(var(--ring) / <alpha-value>)',
         chart: {
-          '1': 'hsl(var(--chart-1))',
-          '2': 'hsl(var(--chart-2))',
-          '3': 'hsl(var(--chart-3))',
-          '4': 'hsl(var(--chart-4))',
-          '5': 'hsl(var(--chart-5))',
+          '1': 'hsl(var(--chart-1) / <alpha-value>)',
+          '2': 'hsl(var(--chart-2) / <alpha-value>)',
+          '3': 'hsl(var(--chart-3) / <alpha-value>)',
+          '4': 'hsl(var(--chart-4) / <alpha-value>)',
+          '5': 'hsl(var(--chart-5) / <alpha-value>)',
         },
         heritage: {
-          mocha: 'hsl(var(--heritage-mocha))',
-          'mocha-deep': 'hsl(var(--heritage-mocha-deep))',
-          'mocha-soft': 'hsl(var(--heritage-mocha-soft))',
-          sand: 'hsl(var(--heritage-sand))',
-          'sand-deep': 'hsl(var(--heritage-sand-deep))',
-          sky: 'hsl(var(--heritage-sky))',
-          'sky-deep': 'hsl(var(--heritage-sky-deep))',
-          gold: 'hsl(var(--heritage-gold))',
-          ink: 'hsl(var(--heritage-ink))',
-          sepia: 'hsl(var(--heritage-sepia))',
-          sage: 'hsl(var(--heritage-sage))',
+          mocha: 'hsl(var(--heritage-mocha) / <alpha-value>)',
+          'mocha-deep': 'hsl(var(--heritage-mocha-deep) / <alpha-value>)',
+          'mocha-soft': 'hsl(var(--heritage-mocha-soft) / <alpha-value>)',
+          sand: 'hsl(var(--heritage-sand) / <alpha-value>)',
+          'sand-deep': 'hsl(var(--heritage-sand-deep) / <alpha-value>)',
+          sky: 'hsl(var(--heritage-sky) / <alpha-value>)',
+          'sky-deep': 'hsl(var(--heritage-sky-deep) / <alpha-value>)',
+          gold: 'hsl(var(--heritage-gold) / <alpha-value>)',
+          ink: 'hsl(var(--heritage-ink) / <alpha-value>)',
+          sepia: 'hsl(var(--heritage-sepia) / <alpha-value>)',
+          sage: 'hsl(var(--heritage-sage) / <alpha-value>)',
         },
       },
       keyframes: {
