@@ -1,0 +1,264 @@
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+import {
+  ArrowLeft,
+  Award,
+  Calendar,
+  Download,
+  Eye,
+  MapPin,
+  Search,
+  Sparkles,
+  UserCheck,
+} from 'lucide-react';
+import { SiteHeader } from '@/components/site-header';
+import { SiteFooter } from '@/components/site-footer';
+import { Button } from '@/components/ui/button';
+import { AnchorProof } from '@/components/anchor-proof';
+import { ProtocolBadges } from '@/components/protocol-badges';
+import { PqcVerification } from '@/components/pqc-verification';
+import { getStore } from '@/lib/db';
+import { getProtocolStatus } from '@/lib/server/heritage-service';
+
+export const dynamic = 'force-dynamic';
+
+export default async function CertificatePage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const store = await getStore();
+  const item = await store.getHeritage(params.id);
+  if (!item) notFound();
+
+  const protocols = getProtocolStatus(item);
+
+  return (
+    <div className="min-h-screen bg-paper-grain">
+      <SiteHeader />
+
+      <main className="mx-auto max-w-4xl px-6 py-12">
+        <Link
+          href="/vault"
+          className="mb-8 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Back to the vault
+        </Link>
+
+        <article className="animate-scale-in overflow-hidden rounded-[2rem] bg-certificate shadow-heritage-lg">
+          {/* Certificate head */}
+          <header className="bg-mocha-panel px-8 py-10 text-center sm:px-12">
+            <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-heritage-sand/20">
+              <Award className="h-7 w-7 text-heritage-sky" />
+            </span>
+            <p className="mt-5 text-[11px] font-semibold tracking-label text-heritage-sky">
+              LegacyChain
+            </p>
+            <h1 className="mt-2 font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+              Heritage Certificate
+            </h1>
+            <p className="mt-3 font-mono text-[11px] text-heritage-sand/60">
+              {item.id}
+            </p>
+          </header>
+
+          <div className="px-8 py-10 sm:px-12">
+            {/* The artifact */}
+            <div className="flex justify-center">
+              <div className="overflow-hidden rounded-3xl bg-heritage-sand/25 shadow-heritage">
+                <img
+                  src={item.imageUrl}
+                  alt={item.title}
+                  className="max-h-72 w-auto object-contain"
+                />
+              </div>
+            </div>
+
+            <div className="mt-8 text-center">
+              <h2 className="font-display text-4xl font-bold tracking-tight text-foreground">
+                {item.title}
+              </h2>
+              <p className="mt-2 font-display text-2xl font-semibold text-heritage-sand-deep">
+                {item.year}
+              </p>
+            </div>
+
+            {/* Three protocols */}
+            <div className="mt-9">
+              <p className="mb-3 text-[11px] font-semibold tracking-label text-muted-foreground">
+                Alexandria Protocols
+              </p>
+              <ProtocolBadges protocols={protocols} anchorStatus={item.blockchain?.status} />
+            </div>
+
+            {/* Metadata */}
+            <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+              <MetaItem icon={Calendar} label="Year" value={String(item.year)} />
+              <MetaItem icon={MapPin} label="Location" value={item.location || '—'} />
+              <MetaItem icon={Award} label="Type" value={item.type} />
+            </dl>
+
+            {/* Digital DNA */}
+            <section className="mt-6 rounded-3xl bg-card p-6 shadow-heritage">
+              <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                Digital DNA · SHA-256
+              </p>
+              <p className="mt-2 break-all font-mono text-sm text-foreground">
+                {item.digitalDna}
+              </p>
+              <a
+                href={`/api/files/${item.digitalDna}?download`}
+                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-heritage-sky-deep hover:underline"
+              >
+                <Download className="h-3.5 w-3.5" />
+                Download the preserved original
+              </a>
+            </section>
+
+            {/* PQC — verified in the browser, not merely asserted */}
+            <div className="mt-4">
+              <PqcVerification signature={item.pqcSignature} />
+            </div>
+
+            {/* Blockchain */}
+            <div className="mt-4">
+              <AnchorProof anchor={item.blockchain} />
+            </div>
+
+            {/* Guardian */}
+            <section className="mt-4 flex items-center justify-between gap-4 rounded-3xl bg-card px-6 py-5 shadow-heritage">
+              <div className="flex items-center gap-3">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-heritage-sand/50 text-heritage-mocha">
+                  <UserCheck className="h-5 w-5" />
+                </span>
+                <div>
+                  <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                    Guardian
+                  </p>
+                  <p className="mt-0.5 text-sm font-medium text-foreground">
+                    {item.contributor.name}
+                    {item.contributor.relationship && ` · ${item.contributor.relationship}`}
+                  </p>
+                </div>
+              </div>
+              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
+                {item.contributor.identityStatus}
+              </span>
+            </section>
+
+            {/* Story */}
+            {item.story && (
+              <section className="mt-4 rounded-3xl bg-heritage-sand/20 px-6 py-5">
+                <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                  Story
+                </p>
+                <p className="mt-2 font-serif-body text-sm italic leading-relaxed text-foreground">
+                  “{item.story}”
+                </p>
+              </section>
+            )}
+
+            {/* AI enrichment */}
+            {item.aiEnrichment && (
+              <section className="mt-4 rounded-3xl bg-card px-6 py-5 shadow-heritage">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-heritage-mocha" />
+                  <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                    AI suggestion · {item.aiEnrichment.status} ·{' '}
+                    {item.aiEnrichment.source}
+                  </p>
+                </div>
+                <p className="mt-3 text-sm leading-relaxed text-foreground">
+                  {item.aiEnrichment.description}
+                </p>
+                <p className="mt-3 text-xs italic text-muted-foreground">
+                  {item.aiEnrichment.note}
+                </p>
+              </section>
+            )}
+
+            {/* Attestations summary */}
+            {item.attestations.length > 0 && (
+              <section className="mt-4 rounded-3xl bg-card px-6 py-5 shadow-heritage">
+                <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+                  Family attestations
+                </p>
+                <ul className="mt-3 space-y-3">
+                  {item.attestations.slice(0, 3).map((attestation) => (
+                    <li key={attestation.id}>
+                      <p className="font-serif-body text-sm italic text-foreground">
+                        “{attestation.statement}”
+                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        — {attestation.attesterName}
+                        {attestation.relationship && `, ${attestation.relationship}`}
+                      </p>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            )}
+
+            {/* QR + footer */}
+            <footer className="mt-10 flex flex-col items-center border-t border-heritage-sand-deep/25 pt-8 text-center">
+              {/* Served as SVG so a printed certificate stays verifiable. */}
+              <img
+                src={`/api/certificate/${item.id}/qr`}
+                alt={`QR code linking to the certificate for ${item.title}`}
+                className="h-28 w-28"
+              />
+              <p className="mt-4 text-[11px] font-semibold tracking-label text-muted-foreground">
+                Scan to verify
+              </p>
+              <p className="mt-3 max-w-md text-xs leading-relaxed text-muted-foreground">
+                This certificate attests to the provenance of a preserved record.
+                The content itself remains private to the family; only proofs are
+                published.
+              </p>
+            </footer>
+          </div>
+        </article>
+
+        <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <Link href={`/provenance/${item.id}`} className="flex-1">
+            <Button size="lg" variant="outline" className="w-full gap-2 rounded-full">
+              <Eye className="h-5 w-5" />
+              View provenance
+            </Button>
+          </Link>
+          <Link href="/verify" className="flex-1">
+            <Button size="lg" className="w-full gap-2 rounded-full">
+              <Search className="h-5 w-5" />
+              Verify a file
+            </Button>
+          </Link>
+        </div>
+      </main>
+
+      <SiteFooter />
+    </div>
+  );
+}
+
+function MetaItem({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Calendar;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center gap-3 rounded-2xl bg-card px-4 py-3 shadow-heritage">
+      <Icon className="h-4 w-4 flex-shrink-0 text-heritage-sky-deep" />
+      <div className="min-w-0">
+        <dt className="text-[10px] font-semibold tracking-label text-muted-foreground">
+          {label}
+        </dt>
+        <dd className="truncate text-sm font-medium text-foreground">{value}</dd>
+      </div>
+    </div>
+  );
+}
