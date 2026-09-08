@@ -4,7 +4,6 @@ import {
   Fingerprint,
   KeyRound,
   Link2,
-  Sparkles,
   ShieldCheck,
   Users,
 } from 'lucide-react';
@@ -13,6 +12,7 @@ import { SiteFooter } from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { listHeritageSummaries } from '@/lib/server/heritage-service';
 import { PersistenceNotice } from '@/components/persistence-notice';
+import { Logo } from '@/components/logo';
 import { getDatabaseError, getStore } from '@/lib/db';
 import { getRuntimeMode } from '@/lib/server/config';
 
@@ -31,8 +31,18 @@ export default async function HomePage() {
 
       {/* Hero — the portfolio's editorial split: mocha panel, cream type */}
       <section className="mx-auto max-w-6xl px-6 pt-12">
-        <div className="overflow-hidden rounded-[2rem] bg-mocha-panel shadow-heritage-lg">
-          <div className="grid gap-10 px-8 py-14 sm:px-14 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center">
+        <div className="relative overflow-hidden rounded-[2rem] bg-mocha-panel shadow-heritage-lg">
+          {/* The mark at editorial scale, cropped by the panel — structure
+              rather than an icon. Kept faint and clear of the text column so
+              it cannot affect legibility. */}
+          <Logo
+            variant="display"
+            decorative
+            coreClassName="text-heritage-sky/[0.14]"
+            className="pointer-events-none absolute -bottom-36 -right-28 hidden w-[38rem] text-heritage-sand/[0.10] lg:block"
+          />
+
+          <div className="relative grid gap-10 px-8 py-14 sm:px-14 sm:py-20 lg:grid-cols-[1.15fr_1fr] lg:items-center">
             <div>
               <p className="text-[11px] font-semibold tracking-label text-heritage-sky">
                 Sovereign History Vault
@@ -74,7 +84,11 @@ export default async function HomePage() {
 
             {/* The one-line thesis, set as a quotation panel */}
             <div className="rounded-[1.75rem] bg-heritage-sand/12 p-8 ring-1 ring-heritage-sand/20 backdrop-blur-sm">
-              <Sparkles className="h-7 w-7 text-heritage-sky" />
+              <Logo
+                decorative
+                className="h-9 w-9 text-heritage-sand"
+                coreClassName="text-heritage-sky"
+              />
               <p className="mt-5 font-display text-2xl font-semibold leading-snug text-white text-balance">
                 AI opens the archive. Provenance keeps it honest.
               </p>
