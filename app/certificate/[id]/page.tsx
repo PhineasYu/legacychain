@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button';
 import { AnchorProof } from '@/components/anchor-proof';
 import { ProtocolBadges } from '@/components/protocol-badges';
 import { PqcVerification } from '@/components/pqc-verification';
+import { PlainProof } from '@/components/plain-proof';
 import { GuardianIdentity } from '@/components/guardian-identity';
 import { getGuardianIdentity } from '@/lib/server/neuro';
 import { getStore } from '@/lib/db';
@@ -89,13 +90,17 @@ export default async function CertificatePage({
               </p>
             </div>
 
-            {/* Three protocols */}
-            <div className="mt-9">
-              <p className="mb-3 text-[11px] font-semibold tracking-label text-muted-foreground">
-                Alexandria Protocols
-              </p>
-              <ProtocolBadges protocols={protocols} anchorStatus={item.blockchain?.status} />
-            </div>
+            <PlainProof
+              preservedAt={item.createdAt}
+              guardianName={item.contributor.name}
+              anchor={item.blockchain}
+            >
+              <ProtocolBadges
+                protocols={protocols}
+                anchorStatus={item.blockchain?.status}
+              />
+              <ProofDetail item={item} />
+            </PlainProof>
 
             {/* Metadata */}
             <dl className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
@@ -103,33 +108,6 @@ export default async function CertificatePage({
               <MetaItem icon={MapPin} label="Location" value={item.location || '—'} />
               <MetaItem icon={Award} label="Type" value={item.type} />
             </dl>
-
-            {/* Digital DNA */}
-            <section className="mt-6 rounded-3xl bg-card p-6 shadow-heritage">
-              <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
-                Digital DNA · SHA-256
-              </p>
-              <p className="mt-2 break-all font-mono text-sm text-foreground">
-                {item.digitalDna}
-              </p>
-              <a
-                href={`/api/files/${item.digitalDna}?download`}
-                className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-heritage-sky-deep hover:underline"
-              >
-                <Download className="h-3.5 w-3.5" />
-                Download the preserved original
-              </a>
-            </section>
-
-            {/* PQC — verified in the browser, not merely asserted */}
-            <div className="mt-4">
-              <PqcVerification signature={item.pqcSignature} />
-            </div>
-
-            {/* Blockchain */}
-            <div className="mt-4">
-              <AnchorProof anchor={item.blockchain} />
-            </div>
 
             {/* Guardian */}
             <div className="mt-4">
@@ -251,6 +229,47 @@ export default async function CertificatePage({
 
       <SiteFooter />
     </div>
+  );
+}
+
+/** The cryptographic evidence, shown only when someone asks for it. */
+function ProofDetail({
+  item,
+}: {
+  item: NonNullable<
+    Awaited<ReturnType<Awaited<ReturnType<typeof getStore>>['getHeritage']>>
+  >;
+}) {
+  return (
+    <>
+            {/* Digital DNA */}
+      <section className="mt-6 rounded-3xl bg-card p-6 shadow-heritage">
+        <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
+          Digital DNA · SHA-256
+        </p>
+        <p className="mt-2 break-all font-mono text-sm text-foreground">
+          {item.digitalDna}
+        </p>
+        <a
+          href={`/api/files/${item.digitalDna}?download`}
+          className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-heritage-sky-deep hover:underline"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Download the preserved original
+        </a>
+      </section>
+
+      {/* PQC — verified in the browser, not merely asserted */}
+      <div className="mt-4">
+        <PqcVerification signature={item.pqcSignature} />
+      </div>
+
+      {/* Blockchain */}
+      <div className="mt-4">
+        <AnchorProof anchor={item.blockchain} />
+      </div>
+
+    </>
   );
 }
 
