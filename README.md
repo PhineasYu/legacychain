@@ -174,8 +174,9 @@ tests/                  vitest specs for hashing, PQC and anchoring
 | --- | --- | --- |
 | `GET` | `/api/health` | Which subsystems are live |
 | `GET` `POST` | `/api/heritage` | List items · preserve an original |
-| `GET` | `/api/heritage/:id` | Full record with provenance |
+| `GET` `DELETE` | `/api/heritage/:id` | Full record with provenance · remove it from the vault |
 | `POST` | `/api/heritage/:id/derived` | Register a transformed version |
+| `PATCH` | `/api/heritage/:id/enrichment` | Record a human verdict on an AI suggestion |
 | `GET` `POST` | `/api/heritage/:id/attestations` | Family attestations |
 | `POST` | `/api/verify` | Fingerprint an upload and look it up |
 | `POST` | `/api/ai/enrich` | AI suggestions (never stored as fact) |
@@ -235,12 +236,38 @@ Note that Neuro's signing algorithms are all elliptic-curve
 vouches for this person*; LegacyChain's own ML-DSA-44 answers *will this
 signature survive a quantum adversary*. They are complementary, not redundant.
 
+## Checking what is switched on
+
+Two views of the same state:
+
+- **`/status`** — plain language. What each subsystem does right now, what is
+  lost while it is reduced, and the exact setting that switches it on. Gaps are
+  separated by whether they actually break a live demo.
+- **`/api/health`** — the same facts as JSON, plus which environment variables
+  the running process can see (names only, never values). Useful when a setting
+  was added in a hosting dashboard but has not reached the deployment.
+
+## Testing
+
+```bash
+npm test                                        # unit tests
+npm run test:e2e                                # against localhost:3000
+BASE_URL=https://your-deployment npm run test:e2e
+```
+
+`test:e2e` walks the demo narrative and asserts each claim — 44 checks covering
+the fingerprint, the PQC signature and its binding to the file hash and parent
+version, anchoring, authentic vs different verification, derived-version
+linkage, the original staying unchanged, human review of AI output, and
+attestation. Run it against a deployment before demoing it.
+
 ## Commands
 
 ```bash
 npm run dev               # development server
 npm run build             # production build
-npm test                  # vitest
+npm test                  # unit tests (hashing, PQC, anchoring)
+npm run test:e2e          # walks the whole demo against a running server
 npm run typecheck         # tsc --noEmit
 npm run neuro:provision   # one-time Neuro account + Legal Identity
 npm run contract:compile  # solc -> contracts/artifacts
@@ -248,3 +275,33 @@ npm run contract:deploy   # deploy HeritageRegistry
 ```
 
 To reset the local vault and re-seed, delete `.data/`.
+
+---
+
+## Taking this over
+
+A clone builds and runs with no configuration: `npm install && npm run dev`.
+Everything below is optional and each subsystem degrades to a labelled local
+mode, so nothing is a blocker to getting started.
+
+**No secrets are in this repository, by design.** To run a deployment with the
+same capabilities, you need these — none can be recovered from the code:
+
+| Variable | Where it comes from |
+| --- | --- |
+| `DATABASE_URL` (or any `*_URL` holding a Postgres string) | Vercel → Storage → Neon. Tables are created automatically on first connect. |
+| `NEURO_HOST` `NEURO_USERNAME` `NEURO_ACCOUNT_PASSWORD` `NEURO_LEGAL_ID` | `npm run neuro:provision` prints all four. Needs an API key/secret from the [sandbox page](https://blockathon.neuro-tech.io/sandbox.html#api-access). |
+| `PQC_GUARDIAN_SEED` | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`. Changing it changes the guardian's public key, so existing signatures stop verifying against the new one. |
+| `ETH_RPC_URL` `ETH_PRIVATE_KEY` `HERITAGE_REGISTRY_ADDRESS` | An RPC provider, a funded Sepolia wallet, and `npm run contract:deploy`. |
+| `ANTHROPIC_API_KEY` | console.anthropic.com |
+
+**Two things to know before changing anything:**
+
+1. *The preservation pipeline runs in a fixed order* — fingerprint, store,
+   sign, anchor, then persist. Persistence is last so a half-preserved record
+   is never written. `lib/server/heritage-service.ts` is the only place that
+   should orchestrate it.
+2. *Honesty is a feature, not politeness.* A simulated anchor is labelled
+   simulated; an unverified identity says unverified; a suggestion nobody has
+   reviewed says so. Several reviewers will look for exactly this. Do not
+   "clean up" those labels into something that reads better.
