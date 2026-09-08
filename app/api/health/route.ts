@@ -65,9 +65,15 @@ function describeEnvironment() {
 
   // Any other *_URL variable the host injected, so a database connected under
   // a custom prefix (STORAGE_URL, NEON_URL, ...) is visible here by name.
-  const otherUrlVars = Object.keys(process.env)
-    .filter((name) => name.endsWith('_URL') && !EXPECTED_VARS.includes(name))
-    .sort();
+  // Report the URL scheme of each, never the value, so a connection string
+  // that is present but in an unexpected form is diagnosable from outside.
+  const otherUrlVars = Object.entries(process.env)
+    .filter(([name]) => name.endsWith('_URL') && !EXPECTED_VARS.includes(name))
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, value]) => {
+      const scheme = /^([a-z][a-z0-9+.-]*):/i.exec((value ?? '').trim())?.[1] ?? '(none)';
+      return `${name} [${scheme}]`;
+    });
 
   return { present, missing, otherUrlVars, vercelEnv: process.env.VERCEL_ENV ?? null };
 }
