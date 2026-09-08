@@ -2,13 +2,13 @@
 
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2FPhineasYu%2Flegacychain&project-name=legacychain&repository-name=legacychain)
 
-> Preserve the original. Preserve its provenance. Let AI understand history
-> without letting AI rewrite it.
+> AI opens the archive. Provenance keeps it honest.
 
-A private, post-quantum, blockchain-backed vault for family heritage.
-Photographs, recordings, letters and documents are preserved with a
-cryptographic fingerprint, an ML-DSA-44 signature and an immutable anchor —
-while the family's actual content never leaves their private vault.
+A private vault for family heritage. AI makes unreadable sources readable —
+faded handwriting, old scripts, recordings nobody has time to listen through.
+Every reading it produces stays attached to the exact bytes it was read from,
+in a record no one can quietly change. Not the family. Not the people running
+the service.
 
 ---
 
@@ -102,6 +102,21 @@ The `register` function in the contract rejects a second write to the same
 record id and requires a derived record's parent to already exist, so the
 chain can only ever grow.
 
+## What AI is for here
+
+A letter from 1982 in another era's handwriting is not readable by the
+grandchild who inherits it. AI transcribes it in seconds, and that is the
+point — it opens an archive that was effectively closed.
+
+But a transcript is a *reading of* a letter, not the letter. Models misread
+handwriting, fill in faded words, and normalise dialect. And two generations
+on, people will read the transcript, because it is the convenient one — the
+scan will sit unopened in a folder. That is not AI behaving badly; it is what
+happens whenever a convenient derivative replaces an inconvenient source.
+
+So every reading is stored beside the source and traceable back to it. Anyone
+can ask to see the exact bytes a transcript was made from, and get them.
+
 ## Two kinds of truth
 
 Cryptography answers *"has this file changed?"* completely. It cannot answer
@@ -110,9 +125,13 @@ relative can confirm, correct or dispute a record; the statement is stored
 beside the record and never over it, so disagreement is preserved as part of
 the history.
 
-AI is an assistant, never the authority. Suggestions come back with
-`status: 'pending'` and a note that they are not historical facts, and the
-source (model name, or `heuristic`) is shown wherever a suggestion appears.
+AI is a reader, never the authority. Its output arrives as
+`status: 'pending'` and only a person can move it to accepted, edited or
+rejected — `PATCH /api/heritage/:id/enrichment` is the only route that can,
+and it cannot touch the file, its fingerprint, its signature or its provenance
+chain. The source (model name, or `heuristic`) is shown wherever a reading
+appears, and a rejected one is reported as rejected rather than rendered as
+description.
 
 ## Privacy
 
@@ -179,7 +198,7 @@ tests/                  vitest specs for hashing, PQC and anchoring
 | `PATCH` | `/api/heritage/:id/enrichment` | Record a human verdict on an AI suggestion |
 | `GET` `POST` | `/api/heritage/:id/attestations` | Family attestations |
 | `POST` | `/api/verify` | Fingerprint an upload and look it up |
-| `POST` | `/api/ai/enrich` | AI suggestions (never stored as fact) |
+| `POST` | `/api/ai/enrich` | Transcribe and describe a source (never stored as fact) |
 | `GET` | `/api/files/:sha256` | Serve a preserved original |
 | `GET` | `/api/certificate/:id` | Public, independently checkable certificate |
 | `GET` | `/api/certificate/:id/qr` | QR code for the certificate |
@@ -235,6 +254,19 @@ Note that Neuro's signing algorithms are all elliptic-curve
 (`GetAlgorithms` reports `pqc: false` for every one). Neuro answers *who
 vouches for this person*; LegacyChain's own ML-DSA-44 answers *will this
 signature survive a quantum adversary*. They are complementary, not redundant.
+
+## The certificate
+
+The certificate opens with the claim in ordinary words — this is the original,
+preserved by whom and when, any copy checks yes or no — and the part a family
+can act on: the record cannot be quietly changed by anyone, including us, so
+the proof outlives this service.
+
+The cryptography sits behind a **Show the proof** disclosure: the SHA-256
+fingerprint, the ML-DSA-44 signature (re-verified in the visitor's own browser
+against the published public key) and the on-chain anchor, read back from the
+registry rather than asserted. Nobody should have to learn cryptography to
+trust the page, and nobody should have to take its word for it either.
 
 ## Checking what is switched on
 
