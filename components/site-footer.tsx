@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Landmark } from 'lucide-react';
+import { Logo } from '@/components/logo';
 
 export function SiteFooter() {
   return (
@@ -8,9 +8,7 @@ export function SiteFooter() {
         <div className="flex flex-col gap-10 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-heritage-sand/20">
-                <Landmark className="h-5 w-5 text-heritage-sand" />
-              </span>
+              <Logo className="h-10 w-10 flex-shrink-0 text-heritage-sand" coreClassName="text-heritage-sky" />
               <span className="font-display text-xl font-bold text-white">
                 LegacyChain
               </span>

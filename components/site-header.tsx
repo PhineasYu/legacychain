@@ -3,7 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState } from 'react';
-import { Menu, X, Landmark } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
+import { Logo } from '@/components/logo';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -25,9 +26,7 @@ export function SiteHeader() {
           className="group flex items-center gap-3"
           onClick={() => setMobileOpen(false)}
         >
-          <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-heritage-mocha text-heritage-sand transition-colors group-hover:bg-heritage-mocha-deep">
-            <Landmark className="h-5 w-5" />
-          </span>
+          <Logo className="h-10 w-10 flex-shrink-0 text-heritage-mocha transition-colors group-hover:text-heritage-mocha-deep" />
           <span className="flex flex-col leading-none">
             <span className="font-display text-xl font-bold tracking-tight text-foreground">
               LegacyChain
