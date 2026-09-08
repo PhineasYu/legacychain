@@ -42,6 +42,7 @@ silently falling back and looking like the setting never applied.
 | Add | To get |
 | --- | --- |
 | `ANTHROPIC_API_KEY` | Real vision-based AI enrichment instead of metadata heuristics |
+| `NEURO_*` (see below) | A real, live-checked Legal Identity for the guardian instead of "Unverified" |
 | `ETH_RPC_URL` + `ETH_PRIVATE_KEY` + `HERITAGE_REGISTRY_ADDRESS` | Anchors actually mined on Sepolia instead of labelled `simulated` |
 | `PQC_GUARDIAN_SEED` | Your own post-quantum signing key instead of the public dev seed |
 
@@ -205,6 +206,35 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 Without it a fixed, public development seed is used. The secret key is derived
 server-side and never reaches the browser.
 
+## Identity (Neuro)
+
+The guardian on a certificate shows as **Unverified** until an identity
+provider backs it — a badge the application cannot check is worse than no
+badge. Neuro issues a reviewed Legal Identity that fills that gap.
+
+Grab the API key and secret for your Sandbox from
+[the FIRSTBLOCK-ATHON sandbox page](https://blockathon.neuro-tech.io/sandbox.html#api-access),
+then run once:
+
+```bash
+NEURO_API_KEY=<key> NEURO_API_SECRET=<secret> npm run neuro:provision
+```
+
+It creates an account, enables it, creates a signing key, applies for a Legal
+Identity, waits for approval, and prints four environment variables. Paste them
+into your host and redeploy.
+
+The certificate then re-reads the identity from its Neuron on every render and
+shows the legal id, state and issuer — rather than trusting what was stored
+alongside the record. Sandbox identities are approved automatically, so the
+certificate labels them as sandbox: they prove the identity exists and is
+approved on that Neuron, not that a real person was verified.
+
+Note that Neuro's signing algorithms are all elliptic-curve
+(`GetAlgorithms` reports `pqc: false` for every one). Neuro answers *who
+vouches for this person*; LegacyChain's own ML-DSA-44 answers *will this
+signature survive a quantum adversary*. They are complementary, not redundant.
+
 ## Commands
 
 ```bash
@@ -212,6 +242,7 @@ npm run dev               # development server
 npm run build             # production build
 npm test                  # vitest
 npm run typecheck         # tsc --noEmit
+npm run neuro:provision   # one-time Neuro account + Legal Identity
 npm run contract:compile  # solc -> contracts/artifacts
 npm run contract:deploy   # deploy HeritageRegistry
 ```

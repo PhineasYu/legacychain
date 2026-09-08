@@ -9,7 +9,6 @@ import {
   MapPin,
   Search,
   Sparkles,
-  UserCheck,
 } from 'lucide-react';
 import { SiteHeader } from '@/components/site-header';
 import { SiteFooter } from '@/components/site-footer';
@@ -17,6 +16,8 @@ import { Button } from '@/components/ui/button';
 import { AnchorProof } from '@/components/anchor-proof';
 import { ProtocolBadges } from '@/components/protocol-badges';
 import { PqcVerification } from '@/components/pqc-verification';
+import { GuardianIdentity } from '@/components/guardian-identity';
+import { getGuardianIdentity } from '@/lib/server/neuro';
 import { getStore } from '@/lib/db';
 import { getProtocolStatus } from '@/lib/server/heritage-service';
 
@@ -32,6 +33,9 @@ export default async function CertificatePage({
   if (!item) notFound();
 
   const protocols = getProtocolStatus(item);
+  // Read the guardian's Legal Identity back from its Neuron rather than
+  // trusting the status stored alongside the record.
+  const identity = await getGuardianIdentity();
 
   return (
     <div className="min-h-screen bg-paper-grain">
@@ -127,25 +131,9 @@ export default async function CertificatePage({
             </div>
 
             {/* Guardian */}
-            <section className="mt-4 flex items-center justify-between gap-4 rounded-3xl bg-card px-6 py-5 shadow-heritage">
-              <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-heritage-sand/50 text-heritage-mocha">
-                  <UserCheck className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
-                    Guardian
-                  </p>
-                  <p className="mt-0.5 text-sm font-medium text-foreground">
-                    {item.contributor.name}
-                    {item.contributor.relationship && ` · ${item.contributor.relationship}`}
-                  </p>
-                </div>
-              </div>
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-secondary-foreground">
-                {item.contributor.identityStatus}
-              </span>
-            </section>
+            <div className="mt-4">
+              <GuardianIdentity contributor={item.contributor} identity={identity} />
+            </div>
 
             {/* Story */}
             {item.story && (

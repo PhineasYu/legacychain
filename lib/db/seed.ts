@@ -96,7 +96,9 @@ export async function seedIfEmpty(store: HeritageStore): Promise<void> {
       story: seed.story,
       contributor: {
         name: 'Sara Abdi',
-        identityStatus: 'Verified Identity',
+        // Demo data carries no identity proof of its own; the certificate
+        // resolves the guardian identity live from the configured provider.
+        identityStatus: 'Unverified',
         relationship: 'Granddaughter',
       },
       aiEnrichment: {

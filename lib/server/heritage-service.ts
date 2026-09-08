@@ -68,9 +68,13 @@ export interface RegisterDerivedInput {
   };
 }
 
+/**
+ * Used when no contributor details are supplied. The identity is Unverified
+ * until an identity provider says otherwise — see lib/server/neuro.ts.
+ */
 const DEFAULT_CONTRIBUTOR: Contributor = {
   name: 'Family Guardian',
-  identityStatus: 'Verified Identity',
+  identityStatus: 'Unverified',
   relationship: 'Guardian',
 };
 

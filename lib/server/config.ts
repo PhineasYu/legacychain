@@ -17,6 +17,7 @@ export interface RuntimeMode {
   database: SubsystemMode;
   blockchain: SubsystemMode;
   ai: SubsystemMode;
+  identity: SubsystemMode;
 }
 
 /** Neon / Postgres connection string. Falls back to the local file store. */
@@ -47,6 +48,17 @@ export const ETH_EXPLORER_BASE =
  */
 export const PQC_GUARDIAN_SEED = process.env.PQC_GUARDIAN_SEED ?? '';
 
+// --- Neuro (identity) -----------------------------------------------------
+// Provisioned once by `npm run neuro:provision`, which prints these values.
+// SECURITY: the account password authorizes signed requests — server-side only.
+
+/** Neuron host, e.g. sandbox1.neuro-tech.io — no scheme, no path. */
+export const NEURO_HOST = process.env.NEURO_HOST ?? '';
+export const NEURO_USERNAME = process.env.NEURO_USERNAME ?? '';
+export const NEURO_ACCOUNT_PASSWORD = process.env.NEURO_ACCOUNT_PASSWORD ?? '';
+/** The approved Legal Identity representing the vault's guardian. */
+export const NEURO_LEGAL_ID = process.env.NEURO_LEGAL_ID ?? '';
+
 /** Directory where uploaded original files are stored in local mode. */
 export const LOCAL_DATA_DIR = process.env.LOCAL_DATA_DIR ?? '.data';
 
@@ -70,10 +82,28 @@ export function isAiConfigured(): boolean {
   return ANTHROPIC_API_KEY.length > 0;
 }
 
+/**
+ * The Agent API requires a Referer identifying this application, and
+ * validates it when applying for an identity.
+ */
+export function neuroAppUrl(): string {
+  return PUBLIC_BASE_URL.endsWith('/') ? PUBLIC_BASE_URL : `${PUBLIC_BASE_URL}/`;
+}
+
+export function isNeuroConfigured(): boolean {
+  return (
+    NEURO_HOST.length > 0 &&
+    NEURO_USERNAME.length > 0 &&
+    NEURO_ACCOUNT_PASSWORD.length > 0 &&
+    NEURO_LEGAL_ID.length > 0
+  );
+}
+
 export function getRuntimeMode(): RuntimeMode {
   return {
     database: isDatabaseConfigured() ? 'live' : 'local',
     blockchain: isBlockchainConfigured() ? 'live' : 'local',
     ai: isAiConfigured() ? 'live' : 'local',
+    identity: isNeuroConfigured() ? 'live' : 'local',
   };
 }

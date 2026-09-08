@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "contract:compile": "node scripts/compile-contract.mjs",
-    "contract:deploy": "node scripts/deploy-contract.mjs"
+    "contract:deploy": "node scripts/deploy-contract.mjs",
+    "neuro:provision": "node scripts/neuro-provision.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",

@@ -87,10 +87,21 @@ export interface BlockchainAnchor {
 // People
 // ---------------------------------------------------------------------------
 
+/**
+ * The person who preserved a record.
+ *
+ * `identityStatus` defaults to 'Unverified' and only becomes verified when an
+ * identity provider actually backs it. A badge the application cannot check
+ * is worse than no badge.
+ */
 export interface Contributor {
   name: string;
-  identityStatus: 'Verified Identity' | 'Pending';
+  identityStatus: 'Verified Identity' | 'Pending' | 'Unverified';
   relationship: string;
+  /** Neuro Legal Identity id, when the guardian has one */
+  legalId?: string;
+  /** Neuron that issued the identity, e.g. sandbox1.neuro-tech.io */
+  identityProvider?: string;
 }
 
 export type AttestationDecision = 'confirm' | 'correct' | 'dispute';
