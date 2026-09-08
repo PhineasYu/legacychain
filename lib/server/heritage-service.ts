@@ -32,6 +32,14 @@ import { storeOriginal } from './files';
 import { signRecord } from './pqc-server';
 
 export interface CreateHeritageInput {
+  /**
+   * Fixed identifiers, used by seeding so that demo records keep the same
+   * ids on every server instance. Without this a shared certificate link
+   * would 404 for anyone whose request lands on a different instance.
+   */
+  id?: string;
+  provenanceId?: string;
+  createdAt?: string;
   title: string;
   year: number;
   type: HeritageType;
@@ -74,7 +82,7 @@ export async function preserveHeritage(
   input: CreateHeritageInput
 ): Promise<HeritageItem> {
   const store = await getStore();
-  const now = new Date().toISOString();
+  const now = input.createdAt ?? new Date().toISOString();
 
   // 1. Digital DNA — the fingerprint of the exact bytes supplied.
   const { digest } = await createDigitalFingerprint(input.file.bytes);
@@ -87,8 +95,8 @@ export async function preserveHeritage(
     originalName: input.file.originalName,
   });
 
-  const heritageId = newId('heritage');
-  const provenanceId = newId('prov');
+  const heritageId = input.id ?? newId('heritage');
+  const provenanceId = input.provenanceId ?? newId('prov');
   const contributor: Contributor = { ...DEFAULT_CONTRIBUTOR, ...input.contributor };
 
   // 3. Post-quantum signature over the provenance claim.

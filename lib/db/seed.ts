@@ -73,8 +73,9 @@ export async function seedIfEmpty(store: HeritageStore): Promise<void> {
 
   for (const seed of SEED_ITEMS) {
     const svg = archivalPlate(seed);
+    const id = slug(seed.title);
     const enrichment = generateHeuristicEnrichment({
-      fileName: `${slug(seed.title)}.svg`,
+      fileName: `${id}.svg`,
       heritageType: seed.type,
       title: seed.title,
       year: seed.year,
@@ -82,6 +83,12 @@ export async function seedIfEmpty(store: HeritageStore): Promise<void> {
     });
 
     await preserveHeritage({
+      // Deterministic ids and timestamp: the demo archive must look
+      // identical on every server instance, so a certificate link shared
+      // with a teammate resolves wherever their request lands.
+      id: `heritage-${id}`,
+      provenanceId: `prov-${id}-original`,
+      createdAt: seedTimestamp(seed.year),
       title: seed.title,
       year: seed.year,
       type: seed.type,
@@ -101,7 +108,7 @@ export async function seedIfEmpty(store: HeritageStore): Promise<void> {
       file: {
         bytes: new TextEncoder().encode(svg),
         contentType: 'image/svg+xml',
-        originalName: `${slug(seed.title)}.svg`,
+        originalName: `${id}.svg`,
       },
     });
   }
@@ -147,6 +154,16 @@ function archivalPlate(seed: SeedItem): string {
   <rect width="800" height="600" fill="url(#v-${id})"/>
 </svg>
 `;
+}
+
+/**
+ * A fixed creation timestamp per seed item, increasing with the item's year,
+ * so the vault sorts newest-first everywhere and PQC signatures over these
+ * records are reproducible across instances.
+ */
+function seedTimestamp(year: number): string {
+  // Minutes overflow into hours, which keeps the mapping monotonic.
+  return new Date(Date.UTC(2026, 0, 15, 0, year - 1900, 0)).toISOString();
 }
 
 function slug(value: string): string {
