@@ -20,6 +20,7 @@ import { GuardianIdentity } from '@/components/guardian-identity';
 import { getGuardianIdentity } from '@/lib/server/neuro';
 import { getStore } from '@/lib/db';
 import { getProtocolStatus } from '@/lib/server/heritage-service';
+import type { AiEnrichment } from '@/lib/types';
 
 export const dynamic = 'force-dynamic';
 
@@ -147,21 +148,33 @@ export default async function CertificatePage({
               </section>
             )}
 
-            {/* AI enrichment */}
+            {/* AI enrichment — a rejected suggestion is reported as rejected,
+                never rendered as if it described the item. */}
             {item.aiEnrichment && (
               <section className="mt-4 rounded-3xl bg-card px-6 py-5 shadow-heritage">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Sparkles className="h-4 w-4 text-heritage-mocha" />
                   <p className="text-[11px] font-semibold tracking-label text-muted-foreground">
-                    AI suggestion · {item.aiEnrichment.status} ·{' '}
-                    {item.aiEnrichment.source}
+                    AI suggestion · {item.aiEnrichment.source}
                   </p>
+                  <EnrichmentVerdict status={item.aiEnrichment.status} />
                 </div>
-                <p className="mt-3 text-sm leading-relaxed text-foreground">
-                  {item.aiEnrichment.description}
-                </p>
+
+                {item.aiEnrichment.status === 'rejected' ? (
+                  <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+                    The family reviewed this suggestion and rejected it. It is
+                    not part of this record.
+                  </p>
+                ) : (
+                  <p className="mt-3 text-sm leading-relaxed text-foreground">
+                    {item.aiEnrichment.description}
+                  </p>
+                )}
+
                 <p className="mt-3 text-xs italic text-muted-foreground">
-                  {item.aiEnrichment.note}
+                  {item.aiEnrichment.status === 'pending'
+                    ? 'No one has reviewed this suggestion yet, so it carries no more weight than a guess.'
+                    : item.aiEnrichment.note}
                 </p>
               </section>
             )}
@@ -248,5 +261,36 @@ function MetaItem({
         <dd className="truncate text-sm font-medium text-foreground">{value}</dd>
       </div>
     </div>
+  );
+}
+
+/** How a human ruled on the AI's suggestion. */
+function EnrichmentVerdict({ status }: { status: AiEnrichment['status'] }) {
+  const config: Record<AiEnrichment['status'], { label: string; className: string }> = {
+    pending: {
+      label: 'Awaiting review',
+      className: 'bg-warning/15 text-warning ring-warning/25',
+    },
+    accepted: {
+      label: 'Accepted by family',
+      className: 'bg-heritage-sky/25 text-heritage-sky-deep ring-heritage-sky/45',
+    },
+    edited: {
+      label: 'Edited by family',
+      className: 'bg-heritage-sky/25 text-heritage-sky-deep ring-heritage-sky/45',
+    },
+    rejected: {
+      label: 'Rejected by family',
+      className: 'bg-muted text-muted-foreground ring-border',
+    },
+  };
+  const { label, className } = config[status];
+
+  return (
+    <span
+      className={`inline-flex rounded-full px-2.5 py-0.5 text-[10px] font-bold tracking-label ring-1 ${className}`}
+    >
+      {label}
+    </span>
   );
 }

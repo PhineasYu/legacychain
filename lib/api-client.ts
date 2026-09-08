@@ -165,6 +165,29 @@ export function registerDerived(params: {
 }
 
 // ---------------------------------------------------------------------------
+// AI review
+// ---------------------------------------------------------------------------
+
+/**
+ * Records a human verdict on an AI suggestion. Only a person can move a
+ * suggestion out of `pending`.
+ */
+export function reviewEnrichment(params: {
+  heritageId: string;
+  status: AiEnrichment['status'];
+  description?: string;
+  estimatedEra?: string;
+  suggestedTags?: string[];
+}): Promise<AiEnrichment> {
+  const { heritageId, ...body } = params;
+  return request(`/api/heritage/${heritageId}/enrichment`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Attestations
 // ---------------------------------------------------------------------------
 

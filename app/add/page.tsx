@@ -27,7 +27,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { AnchorProof } from '@/components/anchor-proof';
 import { ProtocolBadges } from '@/components/protocol-badges';
-import { ApiError, enrichFile, preserveHeritage } from '@/lib/api-client';
+import { ApiError, enrichFile, preserveHeritage, reviewEnrichment } from '@/lib/api-client';
 import type { AiEnrichment, HeritageItem, HeritageType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
@@ -73,7 +73,6 @@ export default function AddHeritagePage() {
   const [error, setError] = useState<string | null>(null);
 
   const [aiData, setAiData] = useState<AiEnrichment | null>(null);
-  const [editingAi, setEditingAi] = useState(false);
   const [preserved, setPreserved] = useState<HeritageItem | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -163,7 +162,6 @@ export default function AddHeritagePage() {
     setActiveStep(null);
     setCompletedSteps([]);
     setAiData(null);
-    setEditingAi(false);
     setPreserved(null);
     setError(null);
   }
@@ -454,9 +452,8 @@ export default function AddHeritagePage() {
 
             {aiData && (
               <AiSuggestionCard
+                heritageId={preserved.id}
                 data={aiData}
-                editing={editingAi}
-                onToggleEdit={() => setEditingAi((value) => !value)}
                 onChange={setAiData}
               />
             )}
@@ -515,19 +512,60 @@ function Field({
   );
 }
 
+/**
+ * The human review step.
+ *
+ * A suggestion arrives as `pending` and stays that way until a person acts on
+ * it. Accept, edit or reject are the only ways out, and each is persisted, so
+ * a certificate always shows whether a description was reviewed and by what
+ * verdict — the model's output never silently becomes the family's record.
+ */
 function AiSuggestionCard({
+  heritageId,
   data,
-  editing,
-  onToggleEdit,
   onChange,
 }: {
+  heritageId: string;
   data: AiEnrichment;
-  editing: boolean;
-  onToggleEdit: () => void;
   onChange: (data: AiEnrichment) => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(data.description);
+  const [saving, setSaving] = useState<AiEnrichment['status'] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function submit(status: AiEnrichment['status'], description?: string) {
+    setSaving(status);
+    setError(null);
+    try {
+      const updated = await reviewEnrichment({
+        heritageId,
+        status,
+        description,
+      });
+      onChange(updated);
+      setEditing(false);
+    } catch (reviewError) {
+      setError(
+        reviewError instanceof ApiError
+          ? reviewError.message
+          : 'Could not record your decision.'
+      );
+    } finally {
+      setSaving(null);
+    }
+  }
+
+  const decided = data.status !== 'pending';
+  const rejected = data.status === 'rejected';
+
   return (
-    <div className="rounded-3xl bg-heritage-sand/20 p-6 shadow-heritage">
+    <div
+      className={cn(
+        'rounded-3xl p-6 shadow-heritage',
+        rejected ? 'bg-muted/60' : 'bg-heritage-sand/20'
+      )}
+    >
       <div className="flex items-start gap-3">
         <span className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-2xl bg-heritage-mocha text-heritage-sand">
           <Sparkles className="h-5 w-5" />
@@ -540,7 +578,7 @@ function AiSuggestionCard({
         </div>
       </div>
 
-      <dl className="mt-5 space-y-4">
+      <dl className={cn('mt-5 space-y-4', rejected && 'opacity-50')}>
         <div>
           <dt className="text-[11px] font-semibold tracking-label text-muted-foreground">
             Estimated era
@@ -573,14 +611,17 @@ function AiSuggestionCard({
           <dd className="mt-1.5">
             {editing ? (
               <Textarea
-                value={data.description}
-                onChange={(event) =>
-                  onChange({ ...data, description: event.target.value, status: 'edited' })
-                }
-                className="min-h-[90px] rounded-2xl"
+                value={draft}
+                onChange={(event) => setDraft(event.target.value)}
+                className="min-h-[100px] rounded-2xl"
               />
             ) : (
-              <p className="text-sm leading-relaxed text-foreground">
+              <p
+                className={cn(
+                  'text-sm leading-relaxed text-foreground',
+                  rejected && 'line-through'
+                )}
+              >
                 {data.description}
               </p>
             )}
@@ -593,32 +634,99 @@ function AiSuggestionCard({
         <p className="text-xs font-medium text-warning">{data.note}</p>
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        <Button
-          size="sm"
-          variant="outline"
-          className="gap-2 rounded-full"
-          onClick={onToggleEdit}
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          {editing ? 'Done editing' : 'Edit description'}
-        </Button>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-card px-3 py-1.5 text-xs font-medium text-muted-foreground ring-1 ring-border">
-          {data.status === 'edited' ? (
-            <>
-              <Pencil className="h-3 w-3" /> Edited by you
-            </>
-          ) : data.status === 'rejected' ? (
-            <>
-              <X className="h-3 w-3" /> Rejected
-            </>
-          ) : (
-            <>
-              <CheckCircle2 className="h-3 w-3" /> Stored as a suggestion
-            </>
-          )}
-        </span>
-      </div>
+      {error && (
+        <p className="mt-3 rounded-xl bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+          {error}
+        </p>
+      )}
+
+      {editing ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            className="gap-2 rounded-full"
+            onClick={() => submit('edited', draft)}
+            disabled={saving !== null || draft.trim().length === 0}
+          >
+            {saving === 'edited' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            )}
+            Save my version
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="rounded-full"
+            onClick={() => {
+              setDraft(data.description);
+              setEditing(false);
+            }}
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <Button
+            size="sm"
+            className="gap-2 rounded-full"
+            onClick={() => submit('accepted')}
+            disabled={saving !== null}
+          >
+            {saving === 'accepted' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            )}
+            Accept
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-2 rounded-full"
+            onClick={() => {
+              setDraft(data.description);
+              setEditing(true);
+            }}
+            disabled={saving !== null}
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="gap-2 rounded-full text-destructive hover:text-destructive"
+            onClick={() => submit('rejected')}
+            disabled={saving !== null}
+          >
+            {saving === 'rejected' ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <X className="h-3.5 w-3.5" />
+            )}
+            Reject
+          </Button>
+
+          <span
+            className={cn(
+              'ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ring-1',
+              decided
+                ? rejected
+                  ? 'bg-muted text-muted-foreground ring-border'
+                  : 'bg-heritage-sky/25 text-heritage-sky-deep ring-heritage-sky/45'
+                : 'bg-warning/15 text-warning ring-warning/25'
+            )}
+          >
+            {data.status === 'pending' && 'Awaiting your review'}
+            {data.status === 'accepted' && 'Accepted by you'}
+            {data.status === 'edited' && 'Edited by you'}
+            {data.status === 'rejected' && 'Rejected'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

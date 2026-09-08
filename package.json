@@ -11,7 +11,8 @@
     "test": "vitest run",
     "contract:compile": "node scripts/compile-contract.mjs",
     "contract:deploy": "node scripts/deploy-contract.mjs",
-    "neuro:provision": "node scripts/neuro-provision.mjs"
+    "neuro:provision": "node scripts/neuro-provision.mjs",
+    "test:e2e": "node scripts/demo-e2e.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.32.1",
